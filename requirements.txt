@@ -1,0 +1,6 @@
+numpy>=1.20
+opencv-python-headless>=4.5
+matplotlib>=3.4
+scipy>=1.7
+PySide6>=6.5
+pyqtgraph>=0.13

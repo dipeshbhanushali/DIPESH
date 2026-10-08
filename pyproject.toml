@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dipesh"
+version = "1.0.0"
+description = "DIPESH: Detection and Imaging of Pbar Events, Spots and Hits - antiproton counting and data analysis"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [{ name = "Dipesh Bhanushali" }]
+keywords = ["antiprotons", "antimatter", "image analysis",
+            "particle detection", "MCP", "PicoScope"]
+classifiers = [
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Physics",
+  "Topic :: Scientific/Engineering :: Image Processing",
+  "Programming Language :: Python :: 3",
+]
+dependencies = [
+  "numpy>=1.20",
+  # headless: none of OpenCV's own windows are used, and the normal build
+  # drags GTK/X11 in alongside Qt for nothing
+  "opencv-python-headless>=4.5",
+  "matplotlib>=3.4",          # marked images in the export
+  "scipy>=1.7",               # RF notch filter and curve fits
+  "PySide6>=6.5",
+  "pyqtgraph>=0.13",
+]
+
+[project.urls]
+Homepage = "https://github.com/dipeshbhanushali/DIPESH"
+
+[project.gui-scripts]
+dipesh = "dipesh.graphical_interface.app:main"
+
+[tool.setuptools.packages.find]
+include = ["dipesh*"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "pytest-qt>=4.2"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

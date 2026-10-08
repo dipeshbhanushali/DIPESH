@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "DIPESH — Detection and Imaging of Pbar Events, Spots and Hits"
+version: "1.0.0"
+date-released: 2026-10-08
+authors:
+  - family-names: "Bhanushali"
+    given-names: "Dipesh"
+abstract: >-
+  Antiproton counting and data analysis tool, built by Dipesh Bhanushali.
+  Desktop application and Python library for counting antiprotons in
+  MCP / phosphor-screen camera images: spot detection, per-spot photometry
+  and shape features, dataset comparison (separation score, PCA), parameter
+  scans against the run parameters, and PicoScope pickup analysis with RF
+  notch filtering.
+keywords:
+  - antiprotons
+  - antimatter
+  - image analysis
+  - particle detection
+  - MCP
+license: GPL-3.0-or-later
+repository-code: "https://github.com/dipeshbhanushali/DIPESH"

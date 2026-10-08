@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/*.toc
+# pip install . builds here, because the folder is called build/
+build/lib/
+build/bdist.*/
+dist/
+.buildenv/
+output/
+.pytest_cache/
+# the report's intermediate files, except its figures
+report/build/*
+!report/build/fig_*.pdf
+!report/report.pdf

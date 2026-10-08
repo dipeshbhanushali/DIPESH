@@ -1,0 +1,54 @@
+# Push a version tag -> a GitHub release with the Windows installer attached.
+#     git tag v1.0.0 && git push origin v1.0.0
+# With the repository connected to Zenodo, that release also archives the
+# source and mints the DOI.
+
+name: Release
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install ".[dev]"
+          QT_QPA_PLATFORM=offscreen pytest -q
+
+  windows:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Install (not editable - PyInstaller cannot collect that)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install . pyinstaller
+      - run: pyinstaller build/dipesh.spec --noconfirm --clean
+      - name: Installer
+        run: |
+          choco install innosetup --no-progress -y
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" build/installer.iss
+      - run: Compress-Archive -Path dist/DIPESH/* -DestinationPath DIPESH-portable.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DIPESH-windows
+          path: |
+            installer/*.exe
+            DIPESH-portable.zip
+      - if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            installer/*.exe
+            DIPESH-portable.zip
