@@ -1,23 +1,16 @@
-"""
-What the program says about itself: name, version, authors, release date,
-licence, DOI. The About window and __version__ read it from here.
-
-Keep it equal to CITATION.cff (tests/test_about.py checks that). It is a
-Python file, not the .cff, so that the packaged app carries it.
-"""
 
 NAME = "DIPESH"
 TITLE = "DIPESH — Detection and Imaging of Pbar Events, Spots and Hits"
 VERSION = "1.0.0"
 RELEASE_DATE = "2026-10-08"
 
-# (given names, family names, ORCID, affiliation); "" where there is none
+# (given names, family names, ORCID, affiliation); 
 AUTHORS = [
-    ("Dipesh", "Bhanushali", "", ""),
+    ("Dipesh", "Bhanushali", "0009-0004-2631-6684",),
 ]
 
 LICENCE = "GPL-3.0-or-later"
-DOI = None                       # set when Zenodo has assigned one
+DOI = None                       #
 
 DESCRIPTION = "Antiproton counting and data analysis tool, built by Dipesh Bhanushali."
 
