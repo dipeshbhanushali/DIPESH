@@ -2,7 +2,7 @@
 The main window.
 
 Layout
-    top     : analysis bar  (image, spots, histogram, pca, plots, pickup)
+    top     : analysis bar  (image, spots, histogram, pca, plots, pickup, learn)
               plus run all / export
     left    : datasets - every folder or batch of images you add, its runs
     centre  : the current analysis
@@ -191,7 +191,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _keys(self):
         QtWidgets.QMessageBox.information(self, "Keyboard shortcuts",
-            "Ctrl+1 … Ctrl+6    switch analysis\n"
+            "Ctrl+1 … Ctrl+7    switch analysis\n"
             "PgUp / PgDn        previous / next image\n"
             "↑ / ↓              move in the run list\n"
             "Ctrl+O             add a folder\n"

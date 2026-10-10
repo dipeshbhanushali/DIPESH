@@ -1,5 +1,5 @@
 """
-The six analyses on the top bar.
+The seven analyses on the top bar.
 
     image      the current frame, every counted spot drawn at its true
                aperture, settings live
@@ -8,6 +8,7 @@ The six analyses on the top bar.
     pca        all shape and brightness features at once
     plots      any run quantity against any Batman parameter, averaged, fitted
     pickup     PicoScope traces for the current run, RF notch, pulse timing
+    learn      (in dipesh.learn) under construction
 """
 
 from .base import Page
@@ -17,8 +18,9 @@ from .histogram import HistogramPage
 from .pca import PcaPage
 from .plots import PlotsPage
 from .pickup import PickupPage
+from ...learn import LearnPage
 
 
 def make_pages(session):
     return [ImagePage(session), SpotsPage(session), HistogramPage(session),
-            PcaPage(session), PlotsPage(session), PickupPage(session)]
+            PcaPage(session), PlotsPage(session), PickupPage(session), LearnPage(session)]

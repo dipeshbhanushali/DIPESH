@@ -3,10 +3,10 @@ from PySide6 import QtCore
 
 from gui import run_all, show
 
-PAGES = ["image", "spots", "histogram", "pca", "plots", "pickup"]
+PAGES = ["image", "spots", "histogram", "pca", "plots", "pickup", "learn"]
 
 
-def test_the_window_opens_on_the_image_page_with_six_pages(window):
+def test_the_window_opens_on_the_image_page_with_seven_pages(window):
     assert window.isVisible()
     assert [p.title for p in window.pages] == PAGES
     assert window.stack.currentIndex() == 0
@@ -15,7 +15,7 @@ def test_the_window_opens_on_the_image_page_with_six_pages(window):
 
 
 def test_each_page_is_selected_from_the_top_bar(window, qtbot):
-    for k in (5, 4, 3, 2, 1, 0):
+    for k in (6, 5, 4, 3, 2, 1, 0):
         qtbot.mouseClick(window.nav.button(k), QtCore.Qt.LeftButton)
         assert window.stack.currentIndex() == k
         assert window.stack.currentWidget() is window.pages[k]
@@ -25,7 +25,7 @@ def test_each_page_is_selected_from_the_top_bar(window, qtbot):
 
 
 def test_each_page_is_selected_with_ctrl_and_its_number(window, qtbot):
-    for k in (5, 4, 3, 2, 1, 0):
+    for k in (6, 5, 4, 3, 2, 1, 0):
         qtbot.keyClick(window, str(k + 1), QtCore.Qt.ControlModifier)
         assert window.stack.currentIndex() == k
         assert window.nav.button(k).isChecked()
