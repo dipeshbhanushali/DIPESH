@@ -6,8 +6,8 @@ RELEASE_DATE = "2026-10-08"
 
 # (given names, family names, ORCID, affiliation); 
 AUTHORS = [
-    ("Dipesh", "Bhanushali", "0009-0004-2631-6684",),
-    ("Giovanni", "Cerchiari", "0000-0003-3068-0425",),
+    ("Dipesh", "Bhanushali", "https://orcid.org/0009-0004-2631-6684",""),
+    ("Giovanni", "Cerchiari", "https://orcid.org/0000-0003-3068-0425",""),
 ]
 
 LICENCE = "GPL-3.0-or-later"
