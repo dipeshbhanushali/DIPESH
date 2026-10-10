@@ -7,6 +7,9 @@ authors:
   - family-names: "Bhanushali"
     given-names: "Dipesh"
     orcid: "https://orcid.org/0009-0004-2631-6684"
+  - family-names: "Cerchiari"
+    given-names: "Giovanni"
+    orcid: "https://orcid.org/0000-0003-3068-0425"
 abstract: >-
   Antiproton counting and data analysis tool, built by Dipesh Bhanushali.
   Desktop application and Python library for counting antiprotons in
