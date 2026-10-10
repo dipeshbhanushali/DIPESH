@@ -16,7 +16,7 @@ CAPTIONS = {
     "pickup": {"show", "channel"},
    
 }
-CAPTIONS["learn"] = set().union(*CAPTIONS.values())
+
 
 def page_combos(page):
     """The page's own combo boxes (pyqtgraph's context menus have their own)."""

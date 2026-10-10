@@ -1,5 +1,5 @@
 # DIPESH
-
+[![DOI](https://zenodo.org/badge/1410534542.svg)](https://doi.org/10.5281/zenodo.23286325)
 **Detection and Imaging of Pbar Events, Spots and Hits**
 
 Antiproton counting and data analysis tool, built by Dipesh Bhanushali.

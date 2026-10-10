@@ -11,7 +11,7 @@ AUTHORS = [
 ]
 
 LICENCE = "GPL-3.0-or-later"
-DOI = None                       #
+DOI = "10.5281/zenodo.23286325"                      #
 
 DESCRIPTION = "Antiproton counting and data analysis tool, built by Dipesh Bhanushali."
 

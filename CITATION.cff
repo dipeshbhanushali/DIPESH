@@ -3,6 +3,7 @@ message: "If you use this software, please cite it as below."
 title: "DIPESH — Detection and Imaging of Pbar Events, Spots and Hits"
 version: "1.0.0"
 date-released: 2026-10-08
+doi: 10.5281/zenodo.23286325
 authors:
   - family-names: "Bhanushali"
     given-names: "Dipesh"
