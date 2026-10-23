@@ -14,7 +14,7 @@ CAPTIONS = {
     "pca": {"axes"},
     "plots": {"x axis", "y axis", "error shown", "model"},
     "pickup": {"show", "channel"},
-   
+    "learn": {"axes", "feature", "lower dataset", "higher dataset", "spots from"},
 }
 
 
@@ -23,6 +23,16 @@ def page_combos(page):
     return [c for c in page.findChildren(QtWidgets.QComboBox)
             if hasattr(c, "caption") or c.parent() is not None
             and "pyqtgraph" not in type(c.parent()).__module__]
+
+
+def views(page):
+    """The combo boxes on show, view by view: learn shows one lesson at a time."""
+    lessons = getattr(page, "lessons", [None])
+    for k in range(len(lessons)):
+        if lessons[k] is not None:
+            page.show_lesson(k)
+        QtWidgets.QApplication.processEvents()
+        yield [c for c in page_combos(page) if c.isVisibleTo(page)]
 
 
 def close_to(pixel, colour, tol=40):
@@ -34,16 +44,17 @@ def close_to(pixel, colour, tol=40):
 def test_every_combo_box_has_a_label_above_it(window):
     for k, page in enumerate(window.pages):
         window.show_page(k)
-        QtWidgets.QApplication.processEvents()
-        combos = page_combos(page)
-        assert {c.caption.text() for c in combos} == CAPTIONS[page.title]
-        for c in combos:
-            lab = c.caption
-            assert lab.isVisible() and lab.objectName() == "muted"
-            top = lab.mapTo(page, QtCore.QPoint(0, 0))
-            box = c.mapTo(page, QtCore.QPoint(0, 0))
-            assert top.y() + lab.height() <= box.y() + 1      # above
-            assert abs(top.x() - box.x()) <= 2                # left edges agree
+        captions = set()
+        for combos in views(page):
+            captions |= {c.caption.text() for c in combos}
+            for c in combos:
+                lab = c.caption
+                assert lab.isVisible() and lab.objectName() == "muted"
+                top = lab.mapTo(page, QtCore.QPoint(0, 0))
+                box = c.mapTo(page, QtCore.QPoint(0, 0))
+                assert top.y() + lab.height() <= box.y() + 1  # above
+                assert abs(top.x() - box.x()) <= 2            # left edges agree
+        assert captions == CAPTIONS[page.title]
 
 
 def test_the_combo_labels_look_like_the_other_small_headings(window):

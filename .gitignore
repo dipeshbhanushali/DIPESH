@@ -13,3 +13,11 @@ output/
 report/build/*
 !report/build/fig_*.pdf
 !report/report.pdf
+
+.claude/
+CLAUDE.md
+PROGRESS.md
+ION_PIPELINE_REVIEW.md
+V2_AUDIT.md
+dipesh-v2-kit/
+dipesh-v2-kit.zip

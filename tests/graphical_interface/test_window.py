@@ -93,7 +93,7 @@ def test_the_about_window_shows_what_about_py_says(window, monkeypatch):
     window.help_menu.actions()[-1].trigger()         # Help > About
     assert seen["title"] == f"About {_about.NAME}"
     for piece in ([_about.TITLE, _about.VERSION, _about.RELEASE_DATE,
-                   _about.LICENCE, "DOI: not yet assigned"]
+                   _about.LICENCE, _about.doi_text()]
                   + _about.author_names()):
         assert piece in seen["text"], piece
     for label in ("Version", "Released", "Author", "Licence", "Cite"):
