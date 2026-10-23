@@ -1,7 +1,7 @@
 
 NAME = "DIPESH"
 TITLE = "DIPESH — Detection and Imaging of Pbar Events, Spots and Hits"
-VERSION = "1.0.0"
+VERSION = "2.0.0.dev0"
 RELEASE_DATE = "2026-10-08"
 
 # (given names, family names, ORCID, affiliation); 

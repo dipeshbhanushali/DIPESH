@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 title: "DIPESH — Detection and Imaging of Pbar Events, Spots and Hits"
-version: "1.0.0"
+version: "2.0.0.dev0"
 date-released: 2026-10-08
 doi: 10.5281/zenodo.23286325
 authors:

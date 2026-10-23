@@ -48,8 +48,9 @@ def test_the_report_has_its_title_version_and_sections(report):
     _, tex = report
     assert "test report" in tex and f"version {_about.VERSION}" in tex
     # the commit is printed when the folder is a git repository with one,
-    # and says so when the working copy has local edits
-    assert re.search(r"version [\d.]+(, commit [0-9a-f]{7,40}"
+    # and says so when the working copy has local edits; the version may
+    # carry a suffix such as .dev0
+    assert re.search(r"version [\w.]+(, commit [0-9a-f]{7,40}"
                      r"( \(with uncommitted changes\))?)?\\\\", tex)
     assert r"\usepackage{mathpazo}" in tex
     for title in ("Summary", "Luminosity", "Radial sigma", "Concentration",

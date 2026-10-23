@@ -1,5 +1,7 @@
 # Changes
 
+## 2.0.0 (in development)
+
 ## 1.0.0 — first public release (2026-10-08)
 
 - Counts antiprotons in MCP / phosphor-screen camera images: hot-pixel
