@@ -11,6 +11,11 @@
   app logs a line per skipped file, and the summary says how many.
 - Floating-point images have a defined rule (README, "Colour and bit depth").
   Integer images give exactly the 1.0 numbers.
+- Two themes, chosen in View and remembered: Phosphor (the 1.0 look, the
+  default) and Glass (frosted panels over a dark backdrop with a soft
+  green/teal glow; plots stay opaque; text contrast at least WCAG AA). On
+  Windows 11, Glass also asks for the Mica frame and a dark title bar.
+- `docs/make_screenshots.py` writes a screenshot of every page in both themes.
 - A colour image that is not grey gives slightly different numbers than in
   1.0, which let the file decoder make it grey: the weights are now the same
   for every format.

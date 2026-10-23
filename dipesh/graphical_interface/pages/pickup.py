@@ -7,8 +7,8 @@ from PySide6 import QtCore, QtGui, QtWidgets
 from ...pickup import (CHANNELS, PickupConfig, ScopeConfig, discover_scopes,
                        measure)
 from ...single_image_analysis import parse_batman
-from ..theme import (CHANNEL_COLOURS, MUTED, PANEL, PHOSPHOR, RULE, TEXT,
-                     style_item)
+from ..theme import (CHANNEL_COLOURS, MUTED, PHOSPHOR, RULE, TEXT,
+                     plot_background, style_item)
 from ..workers import _PickupJob, _PickupSignals
 from .base import (Page, combo, empty_overlay, form, labelled, qcolor,
                    side_column)
@@ -38,7 +38,7 @@ class PickupPage(Page):
         # one panel per scope: scope B sits thousands of µs later on the
         # shared clock, so a single axis squeezes both windows to slivers
         self.plot = pg.GraphicsLayoutWidget()
-        self.plot.setBackground(PANEL)
+        self.plot.setBackground(plot_background())
         left.addWidget(self.plot)
         self.table = QtWidgets.QTableWidget(0, 8)
         self.table.setHorizontalHeaderLabels(

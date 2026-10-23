@@ -99,6 +99,15 @@ many were skipped.
   values are kept and the integer rule above applies to them, so a float image
   on the 0–255 scale counts exactly like the same image stored as 8 bit.
 
+**Look.** *View* offers two themes; the choice is remembered.
+*Phosphor* (the default) is the 1.0 look: a green-black scope screen.
+*Glass* puts the panels on frosted glass over a dark backdrop with a soft
+green/teal glow; plot and image areas stay opaque, and the text, data and
+dataset colours are the same as in Phosphor. On Windows 11 the window frame
+also gets the system's Mica backdrop and a dark title bar. Screenshots of every
+page in both themes: `docs/screenshots/v2/` (made by
+`py docs/make_screenshots.py`).
+
 **Move around.** Click a run, or use ↑ ↓ in the list, or PgUp / PgDn from
 anywhere. Ctrl+1 … Ctrl+6 switch analysis.
 
@@ -237,7 +246,7 @@ dipesh/
   pickup/                    PicoScope signals
     config.py  traces.py  rf_filter.py  pulse.py  measure.py
   graphical_interface/       the desktop app; computes nothing itself
-    app.py  main_window.py  theme.py  session.py  workers.py  widgets.py
+    app.py  main_window.py  theme.py  glass.py  session.py  workers.py  widgets.py
     pages/                   image, spots, histogram, pca, plots, pickup
 build/                       dipesh.spec (PyInstaller), installer.iss (Inno Setup),
                              build_windows.bat

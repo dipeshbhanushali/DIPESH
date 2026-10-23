@@ -1,7 +1,12 @@
 """
-The look: a phosphor scope. A green-black tube face, faint green graticules
-on the plots, and the live count glowing P43 green (~545 nm) - the colour the
-MCP screen actually emits.
+The look. Two themes, picked in View > Theme and kept in the settings:
+
+  Phosphor  (default) a phosphor scope. A green-black tube face, faint green
+            graticules on the plots, and the live count glowing P43 green
+            (~545 nm) - the colour the MCP screen actually emits.
+  Glass     the same colours for text, data and accents, on frosted panels
+            over a dark backdrop with a soft green/teal glow (glass.py).
+            Plot and image areas stay opaque.
 """
 
 import os
@@ -33,6 +38,25 @@ SYMBOLS = ["o", "t", "s", "d", "star"]
 CHANNEL_COLOURS = {"A": "#00A3C2", "B": "#E7528C", "C": "#9A77EC", "D": "#D97100"}
 
 MONO = '"Cascadia Mono", "Consolas", "DejaVu Sans Mono", monospace'
+
+THEMES = ("Phosphor", "Glass")
+# opaque plot and image areas, and their graticule, per theme
+PLOT = {"Phosphor": PANEL, "Glass": "#0A1514"}
+GRID_LINES = {"Phosphor": RULE, "Glass": "#1F3A33"}
+_current = "Phosphor"
+
+
+def current():
+    """The theme in use: "Phosphor" or "Glass"."""
+    return _current
+
+
+def plot_background():
+    return PLOT[_current]
+
+
+def plot_rule():
+    return GRID_LINES[_current]
 
 QSS = f"""
 * {{ font-family: {MONO}; font-size: 10pt; }}
@@ -174,15 +198,76 @@ def arrow_files():
     return out
 
 
-def stylesheet():
-    """The whole style sheet: QSS plus the combo-box arrows. Needs a running
-    QApplication (the arrows are drawn with it).
+# Glass: the Phosphor sheet with these rules after it. Widgets are clear so
+# the frosted panels (glass.Frost) show; boxes, lists and fields get a
+# translucent fill; pop-ups and dialogs, which have nothing of the window
+# behind them, get the panel colour as a solid gradient.
+_G_FIELD = "rgba(4, 10, 9, 150)"
+_G_EDGE = "rgba(205, 255, 232, 40)"
+_G_SELECT = "rgba(156, 255, 87, 40)"
+_G_POP = "#0C1715"
+GLASS_QSS = f"""
+QMainWindow, QWidget {{ background: transparent; }}
+QToolTip {{ background: {_G_POP}; border: 1px solid {_G_EDGE}; }}
+QDialog {{ background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+    stop:0 #0D1C18, stop:1 #0A1617); border: 1px solid {_G_EDGE}; }}
+QFrame#bar {{ background: transparent; border: none; }}
+QPushButton {{ background: rgba(23, 34, 29, 170); border: 1px solid {_G_EDGE};
+               border-radius: 6px; }}
+QPushButton:pressed {{ background: {_G_SELECT}; }}
+QPushButton#nav {{ background: transparent; border: none;
+                   border-bottom: 2px solid transparent; border-radius: 0; }}
+QPushButton#nav:checked {{ border-bottom: 2px solid {PHOSPHOR}; }}
+QPushButton#primary {{ background: {PHOSPHOR}; border: none; border-radius: 6px; }}
+QPushButton#primary:hover {{ background: #B8FF85; }}
+QPushButton#primary:disabled {{ background: {RULE}; }}
+QPushButton#stale {{ background: {AMBER}; border: none; border-radius: 6px; }}
+QGroupBox {{ border: 1px solid {_G_EDGE}; border-radius: 8px; }}
+QTreeWidget, QTableWidget, QListWidget {{ background: {_G_FIELD};
+    border: 1px solid {_G_EDGE}; border-radius: 6px;
+    alternate-background-color: rgba(156, 255, 87, 8);
+    selection-background-color: {_G_SELECT}; }}
+QPlainTextEdit {{ background: transparent; border: none; }}
+QTreeWidget::item:selected, QListWidget::item:selected {{
+    background: {_G_SELECT}; }}
+QHeaderView::section {{ background: rgba(23, 34, 29, 200);
+    border-bottom: 1px solid {_G_EDGE}; border-right: 1px solid {_G_EDGE}; }}
+QTableCornerButton::section {{ background: rgba(23, 34, 29, 200); }}
+QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox {{ background: {_G_FIELD};
+    border: 1px solid {_G_EDGE}; border-radius: 5px;
+    selection-background-color: {_G_SELECT}; }}
+QComboBox QAbstractItemView {{ background: {_G_POP}; border: 1px solid {_G_EDGE}; }}
+QSpinBox::up-button, QSpinBox::down-button,
+QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {{
+    background: transparent; }}
+QCheckBox::indicator {{ background: {_G_FIELD}; }}
+QCheckBox::indicator:checked {{ background: {PHOSPHOR}; }}
+QProgressBar {{ background: {_G_FIELD}; border: 1px solid {_G_EDGE}; }}
+QScrollBar:vertical, QScrollBar:horizontal {{ background: transparent; }}
+QScrollBar::handle:vertical, QScrollBar::handle:horizontal {{
+    background: rgba(205, 255, 232, 40); }}
+QSplitter::handle {{ background: transparent; }}
+QMenu {{ background: {_G_POP}; border: 1px solid {_G_EDGE}; }}
+QMenu::item:selected {{ background: {_G_SELECT}; }}
+QStatusBar {{ background: transparent; border-top: 1px solid {_G_EDGE}; }}
+QTabWidget::pane {{ border: 1px solid {_G_EDGE}; border-radius: 6px; }}
+QTabBar::tab {{ background: transparent; border: 1px solid {_G_EDGE};
+    border-bottom: none; }}
+QTabBar::tab:selected {{ background: {_G_SELECT}; }}
+"""
+
+
+def stylesheet(name=None):
+    """The whole style sheet of a theme (the one in use if name is None):
+    QSS (plus GLASS_QSS for Glass) and the combo-box arrows. Needs a
+    running QApplication (the arrows are drawn with it).
 
     Keep the sub-control first in the selectors (::down-arrow:focus). Written
     the other way round (:focus::down-arrow) Qt draws a second arrow in the
     middle of the box."""
     a = arrow_files()
-    return QSS + f"""
+    glass = GLASS_QSS if (name or _current) == "Glass" else ""
+    return QSS + glass + f"""
 QComboBox {{ padding-right: 20px; }}
 QComboBox::drop-down {{ subcontrol-origin: padding;
     subcontrol-position: center right; border: none; width: 20px; }}
@@ -193,19 +278,43 @@ QComboBox::down-arrow:on {{ image: url({a['phosphor']}); }}
 
 
 def setup_pyqtgraph():
-    pg.setConfigOptions(background=PANEL, foreground=MUTED, antialias=True,
-                        imageAxisOrder="row-major")
+    pg.setConfigOptions(background=plot_background(), foreground=MUTED,
+                        antialias=True, imageAxisOrder="row-major")
+
+
+def use_theme(name, app=None):
+    """Make name the theme in use: style sheet, pyqtgraph defaults. Plots
+    that exist already are recoloured with restyle_plots()."""
+    global _current
+    if name not in THEMES:
+        raise ValueError(f"no theme {name!r}; there are {THEMES}")
+    _current = name
+    app = app or QtWidgets.QApplication.instance()
+    if app is not None:
+        app.setStyleSheet(stylesheet(name))
+    setup_pyqtgraph()
+
+
+def restyle_plots(root):
+    """Give every plot and image view under root the opaque background and
+    the graticule of the theme in use."""
+    for view in root.findChildren(pg.GraphicsView):
+        view.setBackground(plot_background())
+        for item in view.scene().items():
+            if isinstance(item, pg.AxisItem):
+                item.setPen(pg.mkPen(plot_rule()))
+                item.setTextPen(pg.mkPen(MUTED))
 
 
 def scope_plot(xlabel="", ylabel=""):
     """A plot styled as a scope screen: faint green graticule, quiet axes."""
     w = pg.PlotWidget()
-    w.setBackground(PANEL)
+    w.setBackground(plot_background())
     p = w.getPlotItem()
     p.showGrid(x=True, y=True, alpha=0.22)
     for name in ("left", "bottom"):
         ax = p.getAxis(name)
-        ax.setPen(pg.mkPen(RULE))
+        ax.setPen(pg.mkPen(plot_rule()))
         ax.setTextPen(pg.mkPen(MUTED))
         ax.enableAutoSIPrefix(False)
     if xlabel:
@@ -220,7 +329,7 @@ def style_item(p):
     p.showGrid(x=True, y=True, alpha=0.22)
     for name in ("left", "bottom"):
         ax = p.getAxis(name)
-        ax.setPen(pg.mkPen(RULE))
+        ax.setPen(pg.mkPen(plot_rule()))
         ax.setTextPen(pg.mkPen(MUTED))
         ax.enableAutoSIPrefix(False)
     return p

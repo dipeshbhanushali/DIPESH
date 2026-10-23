@@ -8,6 +8,9 @@ Layout
     centre  : the current analysis
     right   : detection settings (image and spots pages)
     bottom  : console
+
+View > Theme switches between the Phosphor and Glass looks (theme.py); the
+choice is kept in QSettings under "theme".
 """
 
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -15,7 +18,9 @@ from PySide6 import QtCore, QtGui, QtWidgets
 from .. import __version__, _about
 from .pages import make_pages
 from .session import Session
-from .theme import APP_NAME, MUTED, glow
+from .glass import Backdrop, Frost, windows_frame
+from .theme import (APP_NAME, MUTED, THEMES, TUBE, current, glow,
+                    restyle_plots, use_theme)
 from .widgets import Console, DetectionPanel, ExportDialog, Sidebar
 from .workers import ExportWorker, LiveDetector, RunAllWorker
 
@@ -48,8 +53,10 @@ class MainWindow(QtWidgets.QMainWindow):
         # File and Help sit on the same line as the tabs; there is no
         # separate menu bar. Their menus are filled in _menus().
         self.file_btn = self._menu_button("File")
+        self.view_btn = self._menu_button("View")
         self.help_btn = self._menu_button("Help")
         hb.addWidget(self.file_btn)
+        hb.addWidget(self.view_btn)
         hb.addWidget(self.help_btn)
         hb.addSpacing(14)
 
@@ -70,7 +77,7 @@ class MainWindow(QtWidgets.QMainWindow):
             hb.addWidget(b)
         self.nav.idClicked.connect(self.show_page)
         # a tool button asks for a few pixels more than a tab; keep one line
-        for b in (self.file_btn, self.help_btn):
+        for b in (self.file_btn, self.view_btn, self.help_btn):
             b.setFixedHeight(self.nav.button(0).sizeHint().height())
         hb.addStretch(1)
 
@@ -111,16 +118,21 @@ class MainWindow(QtWidgets.QMainWindow):
         vsplit.setStretchFactor(0, 1)
         vsplit.setSizes([780, 120])
 
-        root = QtWidgets.QWidget()
+        root = self.backdrop = Backdrop(TUBE)
         v = QtWidgets.QVBoxLayout(root)
         v.setContentsMargins(0, 0, 0, 0)
         v.setSpacing(0)
         v.addWidget(bar)
         v.addWidget(vsplit, 1)
         self.setCentralWidget(root)
+        # the panels that turn to frosted glass in the Glass theme
+        self.frost = Frost(root, [bar, self.sidebar, self.stack,
+                                  self.detection, self.console])
 
         self._shortcuts()
         self._menus()
+        self.set_theme(str(QtCore.QSettings().value("theme", "Phosphor")),
+                       save=False)
         self.s.paramsChanged.connect(self._update_run_button)
         self.s.resultsChanged.connect(self._update_run_button)
         self.s.datasetsChanged.connect(self._update_run_button)
@@ -184,10 +196,52 @@ class MainWindow(QtWidgets.QMainWindow):
         m.addSeparator()
         action(m, "Quit", self.close, "Ctrl+Q")
         self.file_btn.setMenu(m)
+        v = self.view_menu = QtWidgets.QMenu(self)
+        group = QtGui.QActionGroup(self)
+        self.theme_actions = {}
+        for name in THEMES:
+            a = action(v, f"{name} theme", lambda _=False, n=name:
+                       self.set_theme(n))
+            a.setCheckable(True)
+            group.addAction(a)
+            self.theme_actions[name] = a
+        self.view_btn.setMenu(v)
         h = self.help_menu = QtWidgets.QMenu(self)
         action(h, "Keyboard shortcuts", self._keys)
         action(h, "About", self._about)
         self.help_btn.setMenu(h)
+
+    # look
+    def set_theme(self, name, save=True):
+        """Switch to the Phosphor or Glass look. Only the look changes: the
+        datasets, the current image and the results stay as they are."""
+        if name not in THEMES:
+            name = "Phosphor"
+        glass = name == "Glass"
+        if name != current():
+            use_theme(name)
+        self.backdrop.glass = glass
+        for w in self.frost.widgets:              # room inside the rounded edge
+            lay = w.layout()
+            if lay is not None:
+                if not hasattr(w, "_margins"):
+                    w._margins = lay.contentsMargins()
+                m = w._margins
+                pad = 6 if glass else 0
+                lay.setContentsMargins(m.left() + pad, m.top() + pad,
+                                       m.right() + pad, m.bottom() + pad)
+        restyle_plots(self)
+        self.console.document().setDocumentMargin(10 if glass else 4)
+        self.theme_actions[name].setChecked(True)
+        if self.isVisible():
+            windows_frame(self, glass)
+        if save:
+            QtCore.QSettings().setValue("theme", name)
+        self.update()
+
+    def showEvent(self, e):
+        super().showEvent(e)
+        windows_frame(self, self.backdrop.glass)
 
     def _keys(self):
         QtWidgets.QMessageBox.information(self, "Keyboard shortcuts",

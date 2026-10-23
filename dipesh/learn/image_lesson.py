@@ -18,7 +18,7 @@ from PySide6 import QtCore, QtGui, QtWidgets
 from ..graphical_interface.pages.base import empty_overlay, qcolor
 from ..graphical_interface.pages.image import phosphor_map
 from ..graphical_interface.theme import (AMBER, ISOLATED, PANEL, PHOSPHOR,
-                                         RED, TEXT)
+                                         RED, TEXT, plot_background)
 from ..single_image_analysis import load_item
 from .crops import aperture, event_order, quiet_window, stages, window_at
 from .textfile import LessonText
@@ -75,7 +75,7 @@ class CropView(QtWidgets.QWidget):
         self.head = head
 
         self.gw = pg.GraphicsLayoutWidget()
-        self.gw.setBackground(PANEL)
+        self.gw.setBackground(plot_background())
         self.vb = self.gw.addViewBox()
         self.vb.invertY(True)
         self.vb.setAspectLocked(True)
