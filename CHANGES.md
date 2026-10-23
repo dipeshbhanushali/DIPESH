@@ -2,6 +2,19 @@
 
 ## 2.0.0 (in development)
 
+- Any image, any folder. JPG/JPEG and BMP are read, as well as TIFF and PNG;
+  colour images become grey (BT.601 weights, alpha dropped). Each page of a
+  multi-page TIFF and each frame of an AVI or MP4 video is one item; video
+  frames are read only when needed, and a frame range can be chosen. A folder
+  is read at any depth: each folder of runs or loose files becomes a dataset.
+- Nothing is dropped silently: scan() lists every file it skips and why, the
+  app logs a line per skipped file, and the summary says how many.
+- Floating-point images have a defined rule (README, "Colour and bit depth").
+  Integer images give exactly the 1.0 numbers.
+- A colour image that is not grey gives slightly different numbers than in
+  1.0, which let the file decoder make it grey: the weights are now the same
+  for every format.
+
 ## 1.0.0 — first public release (2026-10-08)
 
 - Counts antiprotons in MCP / phosphor-screen camera images: hot-pixel

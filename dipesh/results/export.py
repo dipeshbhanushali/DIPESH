@@ -10,7 +10,7 @@ from datetime import datetime
 
 import numpy as np
 
-from ..single_image_analysis import load_image, prepare
+from ..single_image_analysis import load_item, prepare
 
 
 SPOT_COLUMNS = ["run_number", "spot_id", "x", "y", "luminosity", "radius_used",
@@ -37,6 +37,8 @@ def _run_row(r, dataset):
            "threshold_used": f"{i.thresh:.1f}",
            "hot_pixels": i.hot_pixels,
            "image": r.item.path}
+    if r.item.frame is not None:                  # a TIFF page or video frame
+        row["frame"] = r.item.frame
     row.update(r.pickup)
     row.update({k: r.batman[k] for k in sorted(r.batman)})
     return row
@@ -88,7 +90,7 @@ def save_marked(r, path, params):
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    img = load_image(r.item.path)
+    img = load_item(r.item)
     if img is None:
         return
     diff, _, _ = prepare(img, params)

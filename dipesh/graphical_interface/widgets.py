@@ -6,7 +6,8 @@ import time
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from ..single_image_analysis import DetectionParams, scan
+from ..single_image_analysis import (READ_EXTS, VIDEO_EXTS, DetectionParams,
+                                     frame_count, scan, scan_tree)
 from .theme import AMBER, MUTED, PHOSPHOR, RED, TEXT, glow, marker_icon
 
 
@@ -267,9 +268,11 @@ class Sidebar(QtWidgets.QWidget):
         row = QtWidgets.QHBoxLayout()
         self.add_folder = QtWidgets.QPushButton("Add folder…")
         self.add_folder.setToolTip("A folder of pbar_run_XXXXXX folders, one "
-                                   "run folder, or a folder of images (Ctrl+O)")
+                                   "run folder, or a folder of images or "
+                                   "videos, at any depth (Ctrl+O)")
         self.add_images = QtWidgets.QPushButton("Add images…")
-        self.add_images.setToolTip("Pick image files directly (Ctrl+Shift+O)")
+        self.add_images.setToolTip("Pick image or video files directly "
+                                   "(Ctrl+Shift+O)")
         row.addWidget(self.add_folder)
         row.addWidget(self.add_images)
         col.addLayout(row)
@@ -328,31 +331,74 @@ class Sidebar(QtWidgets.QWidget):
     def pick_images(self):
         files, _ = QtWidgets.QFileDialog.getOpenFileNames(
             self, "Add images", QtCore.QSettings().value("last_dir", ""),
-            "Images (*.tif *.tiff *.png)")
+            "Images and videos (" + " ".join("*" + e for e in READ_EXTS) + ")")
         if files:
             QtCore.QSettings().setValue("last_dir", os.path.dirname(files[0]))
-            items = [it for f in files for it in scan(f)]
-            name = os.path.basename(os.path.dirname(files[0])) or "images"
-            self._add(name, items)
+            self._add_files(files)
 
     def add_paths(self, paths):
+        """Folders become datasets (one per folder that holds runs or
+        images, at any depth); files given together become one dataset."""
         files = [p for p in paths if os.path.isfile(p)]
         for p in paths:
             if os.path.isdir(p):
-                self._add(os.path.basename(os.path.normpath(p)), scan(p))
+                datasets, skipped = scan_tree(p)
+                self._log_skipped(skipped)
+                if not datasets:
+                    self._add(os.path.basename(os.path.normpath(p)), [])
+                for name, items in datasets:
+                    self._add(name, items)
+            elif not os.path.isfile(p):
+                self._log_skipped([(p, "not found")])
         if files:
-            items = [it for f in files for it in scan(f)]
-            self._add(os.path.basename(os.path.dirname(files[0])), items)
+            self._add_files(files)
+
+    def _add_files(self, files):
+        found = [scan(f) for f in files]
+        self._log_skipped([s for f in found for s in f.skipped])
+        name = os.path.basename(os.path.dirname(files[0])) or "images"
+        self._add(name, [it for f in found for it in f])
+
+    def _log_skipped(self, skipped):
+        """One log line per file or folder not used, and the count kept for
+        the summary under the list."""
+        for path, reason in skipped:
+            self.s.log(f"skipped {path}: {reason}", "warn")
+        if skipped:
+            self.s.n_skipped += len(skipped)
+            self.update_counts()
 
     def _add(self, name, items):
         if not items:
             self.s.log(f"nothing to analyse in {name}: no pbar_run_ folders, "
-                       "TIFFs or images found", "warn")
+                       "images or videos found", "warn")
             return
         ds = self.s.add(name, items)
         self.s.log(f"added dataset {ds.name}: {len(items)} images")
         if self.s.current is None:
             self.select(ds, items[0])
+
+    def set_frames(self, ds, frames):
+        """Use only the given frames of every video in a dataset: frames is
+        a range, or (start, stop[, step]) with stop not included."""
+        items, seen = [], set()
+        for it in ds.items:
+            if not it.path.lower().endswith(VIDEO_EXTS):
+                items.append(it)
+            elif it.path not in seen:
+                seen.add(it.path)
+                items += scan(it.path, frames)
+        self.s.replace_items(ds, items)
+        self.s.log(f"{ds.name}: {len(items)} images")
+
+    def choose_frames(self, ds):
+        videos = sorted({it.path for it in ds.items
+                         if it.path.lower().endswith(VIDEO_EXTS)})
+        if not videos:
+            return
+        dlg = FrameRangeDialog(max(frame_count(v) for v in videos), self)
+        if dlg.exec() == QtWidgets.QDialog.Accepted:
+            self.set_frames(ds, dlg.frames())
 
     def dragEnterEvent(self, e):
         if e.mimeData().hasUrls():
@@ -380,7 +426,7 @@ class Sidebar(QtWidgets.QWidget):
                 node.setToolTip(0, it.path)
                 node.setTextAlignment(1, QtCore.Qt.AlignRight)
                 top.addChild(node)
-                self._nodes[it.path] = node
+                self._nodes[it.key] = node
             top.setExpanded(True)
         self.tree.blockSignals(False)
         self.empty.setVisible(not self.s.datasets)
@@ -388,7 +434,7 @@ class Sidebar(QtWidgets.QWidget):
         self._apply_filter(self.filter.text())
         self.update_counts()
         if self.s.current:
-            node = self._nodes.get(self.s.current[1].path)
+            node = self._nodes.get(self.s.current[1].key)
             if node:
                 self.tree.blockSignals(True)
                 self.tree.setCurrentItem(node)
@@ -421,10 +467,15 @@ class Sidebar(QtWidgets.QWidget):
             top.setText(1, str(tot) if ds.results else "")
         n = sum(len(d.items) for d in self.s.datasets)
         done = sum(len(d.done()) for d in self.s.datasets)
-        self.summary.setText(f"{n} images, {done} counted" if n else "")
+        parts = [f"{n} images, {done} counted"] if n else []
+        if self.s.n_skipped:
+            parts.append(f"{self.s.n_skipped} skipped")
+        self.summary.setText(", ".join(parts))
+        self.summary.setToolTip("files that were not read are listed in the "
+                                "log" if self.s.n_skipped else "")
 
     def select(self, ds, item):
-        node = self._nodes.get(item.path)
+        node = self._nodes.get(item.key)
         if node:
             self.tree.setCurrentItem(node)
 
@@ -471,6 +522,8 @@ class Sidebar(QtWidgets.QWidget):
         if data[0] == "ds":
             ds = data[1]
             m.addAction("Rename", lambda: self.tree.editItem(node, 0))
+            if any(it.path.lower().endswith(VIDEO_EXTS) for it in ds.items):
+                m.addAction("Choose frames…", lambda: self.choose_frames(ds))
             m.addAction(f"Remove dataset {ds.name}", lambda: self.s.remove(ds))
         else:
             ds, it = data[1], data[2]
@@ -478,6 +531,35 @@ class Sidebar(QtWidgets.QWidget):
                 QtCore.QUrl.fromLocalFile(os.path.dirname(it.path))))
             m.addAction(f"Remove {it.name}", lambda: self.s.remove(ds, it))
         m.exec(self.tree.viewport().mapToGlobal(pos))
+
+
+class FrameRangeDialog(QtWidgets.QDialog):
+    """Which frames of a video to use: first, last and every how many."""
+
+    def __init__(self, n, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Choose frames")
+        form = QtWidgets.QFormLayout(self)
+        form.addRow(QtWidgets.QLabel(f"The video has {n} frames, "
+                                     f"numbered from 0."))
+        self.first, self.last, self.every = (QtWidgets.QSpinBox()
+                                             for _ in range(3))
+        self.first.setRange(0, max(n - 1, 0))
+        self.last.setRange(0, max(n - 1, 0))
+        self.last.setValue(max(n - 1, 0))
+        self.every.setRange(1, max(n, 1))
+        form.addRow("First frame", self.first)
+        form.addRow("Last frame", self.last)
+        form.addRow("Every", self.every)
+        buttons = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        form.addRow(buttons)
+
+    def frames(self):
+        return range(self.first.value(), self.last.value() + 1,
+                     self.every.value())
 
 
 class Console(QtWidgets.QPlainTextEdit):

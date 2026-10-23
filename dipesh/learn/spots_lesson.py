@@ -21,7 +21,7 @@ from ..graphical_interface.pages.base import empty_overlay
 from ..graphical_interface.pages.spots import SPOT_COLS, SpotsPage
 from ..graphical_interface.theme import (AMBER, ISOLATED, PHOSPHOR, RED,
                                          scope_plot)
-from ..single_image_analysis import load_image
+from ..single_image_analysis import load_item
 from .crops import aperture, stages, window_at
 from .description import Description
 from .hover import HoverWatch, map_control
@@ -208,9 +208,9 @@ class SpotsLesson(QtWidgets.QWidget):
 
     def _stages(self, r):
         p = self._params(r)
-        key = (r.item.path, p)
+        key = (r.item.key, p)
         if key not in self._cache:
-            img = load_image(r.item.path)
+            img = load_item(r.item)
             self._cache = {key: stages(img, p) if img is not None else None}
         return self._cache[key], p
 

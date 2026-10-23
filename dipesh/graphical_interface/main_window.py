@@ -264,7 +264,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @QtCore.Slot(object, object)
     def _one_done(self, ds, r):
-        ds.results[r.item.path] = r
+        ds.results[r.item.key] = r
         if not r.ok:
             self.s.log(f"{ds.name}/{r.item.name}: {r.error}", "error")
         # repaint in batches, not on every image

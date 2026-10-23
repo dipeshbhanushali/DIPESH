@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from ..single_image_analysis import (DetectionParams, DetectionInfo, Item,
-                                     detect, load_image, parse_batman)
+                                     detect, load_item, parse_batman)
 
 
 @dataclass
@@ -67,7 +67,7 @@ RUN_METRICS = {
 
 def analyse(item: Item, params: DetectionParams) -> RunResult:
     """Detect and measure every spot in one image, and read its Batman."""
-    img = load_image(item.path)
+    img = load_item(item)
     if img is None:
         return RunResult(item, error="could not read image")
     spots, info = detect(img, params, photometry=True)

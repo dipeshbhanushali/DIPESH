@@ -52,16 +52,52 @@ py -m dipesh
 
 - a folder of `pbar_run_XXXXXX…` folders — one entry per run, with its
   run parameter file (`Batman.json`) and PicoScope files picked up
-  automatically
+  automatically (both are optional)
 - a single run folder
-- a folder of loose `.tif` / `.tiff` / `.png` images
+- a folder of loose images or videos
+- a folder holding any of these at any depth
 
 *Add images…* takes files directly. You can also drop folders onto the list.
 
-Each folder you add becomes a **dataset** with its own colour and marker
-shape. Add pbar, background and ion runs as separate datasets and the
-histogram, PCA and plots compare them. Double-click a dataset's name to
-rename it.
+Every folder with runs or loose files becomes a **dataset**, named after the
+folder, with its own colour and marker shape. (Two folders with the same name
+are told apart by their path; loose files next to run folders become a second
+dataset, "*folder* (files)".) Add pbar, background and ion runs as separate
+datasets and the histogram, PCA and plots compare them. Double-click a
+dataset's name to rename it.
+
+**Files that are read.**
+
+| Kind | Extensions | Items |
+|---|---|---|
+| Still images | `.tif` `.tiff` `.png` `.jpg` `.jpeg` `.bmp` | one per image |
+| Multi-page TIFF | `.tif` `.tiff` | one per page: `stack.tif [page 3]` |
+| Videos | `.avi` `.mp4` | one per frame: `clip.avi [frame 12]`, frames from 0 |
+
+A video's frames are read one at a time, when they are needed; the whole
+video is never loaded. Right-click a dataset with videos and pick *Choose
+frames…* to use only some of them (first, last, every how many). In a run
+folder the first TIFF is used, else the first other image, else the first
+video. Anything else is **not dropped silently**: each file that is skipped
+gets a line in the log saying why, and the summary under the list says how
+many were skipped.
+
+**Colour and bit depth.**
+
+- Colour images become grey. The alpha channel, if any, is dropped. If the
+  three colour channels are equal everywhere (a grey image saved as colour, as
+  most camera videos are) one of them is kept unchanged; otherwise
+  grey = 0.299 R + 0.587 G + 0.114 B (ITU-R BT.601, the weights OpenCV uses),
+  without rounding.
+- Integer images (8, 10, 12 or 16 bit) keep the 1.0 rule: the values are
+  scaled to 0–255 by the camera's full scale (255, 1023, 4095 or 65535: the
+  smallest one at or above the image's highest pixel), never by the image's own
+  maximum.
+- Floating-point images (for example a median background saved as 32-bit
+  float): NaN and infinite pixels become 0. If no pixel is above 1.0, the image
+  is taken as a fraction of full scale and multiplied by 255. Otherwise the
+  values are kept and the integer rule above applies to them, so a float image
+  on the 0–255 scale counts exactly like the same image stored as 8 bit.
 
 **Move around.** Click a run, or use ↑ ↓ in the list, or PgUp / PgDn from
 anywhere. Ctrl+1 … Ctrl+6 switch analysis.
@@ -134,6 +170,11 @@ for r in results:
     print(r.item.run_number, r.n, r.info.integrated_lum, r.batman.get("ExtLine_MCP"))
 ```
 
+`scan()` reads one folder; `items.skipped` lists what it did not use and why.
+`scan_tree(folder)` reads every folder below as well and returns
+`([(dataset name, items), ...], skipped)`. For videos,
+`scan(path, frames=(0, 100, 5))` uses only those frames (as Python's `range`).
+
 `measure_pickup`, `separation_score`, `best_threshold`, `pca`, `average_xy`,
 `fit_curve`, `write_outputs` and `append_master` are importable too.
 
@@ -178,7 +219,7 @@ dipesh/
   _about.py                  name, version, author, date, licence, DOI
   single_image_analysis/     one camera image -> spots
     params.py                DetectionParams, Spot, DetectionInfo
-    loading.py               scan, load_image, parse_batman
+    loading.py               scan, scan_tree, load_image (pages, video frames), parse_batman
     preprocessing.py         hot pixels, bit-depth scaling, background
     detection.py             detect(): threshold, shape cuts, one count per particle
     image_luminosity.py      integrated light in the MCP circle, count from light

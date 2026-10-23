@@ -14,14 +14,14 @@ class Dataset:
         self.items = items
         self.colour = SERIES[index % len(SERIES)]
         self.symbol = SYMBOLS[index % len(SYMBOLS)]
-        self.results = {}                     # item.path -> RunResult
+        self.results = {}                     # item.key -> RunResult
 
     def result(self, item):
-        return self.results.get(item.path)
+        return self.results.get(item.key)
 
     def done(self):
-        return [self.results[i.path] for i in self.items
-                if i.path in self.results and self.results[i.path].ok]
+        return [self.results[i.key] for i in self.items
+                if i.key in self.results and self.results[i.key].ok]
 
 
 class Session(QtCore.QObject):
@@ -40,6 +40,7 @@ class Session(QtCore.QObject):
         self.results_params = None            # params the stored results used
         self.current = None                   # (Dataset, Item)
         self.live = None                      # RunResult for the current item
+        self.n_skipped = 0                    # files looked at and not read
         self._added = 0
 
     # datasets
@@ -59,9 +60,23 @@ class Session(QtCore.QObject):
             self.datasets.remove(ds)
         else:
             ds.items.remove(item)
-            ds.results.pop(item.path, None)
+            ds.results.pop(item.key, None)
         if self.current and (self.current[0] is ds and
                              (item is None or self.current[1] is item)):
+            self.current = None
+            self.live = None
+            self.currentChanged.emit()
+        self.datasetsChanged.emit()
+        self.resultsChanged.emit()
+
+    def replace_items(self, ds, items):
+        """Give a dataset a new list of items; results of items it keeps
+        are kept."""
+        keep = {i.key for i in items}
+        ds.items = items
+        ds.results = {k: r for k, r in ds.results.items() if k in keep}
+        if (self.current and self.current[0] is ds
+                and self.current[1].key not in keep):
             self.current = None
             self.live = None
             self.currentChanged.emit()

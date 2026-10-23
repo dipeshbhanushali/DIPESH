@@ -19,7 +19,7 @@ from ..graphical_interface.pages.base import empty_overlay, qcolor
 from ..graphical_interface.pages.image import phosphor_map
 from ..graphical_interface.theme import (AMBER, ISOLATED, PANEL, PHOSPHOR,
                                          RED, TEXT)
-from ..single_image_analysis import load_image
+from ..single_image_analysis import load_item
 from .crops import aperture, event_order, quiet_window, stages, window_at
 from .textfile import LessonText
 
@@ -437,8 +437,8 @@ class ImageLesson(QtWidgets.QWidget):
                 self._show_text()
             return
         item = cur[1]
-        if item.path != self._img_path:
-            self._img, self._img_path = load_image(item.path), item.path
+        if item.key != self._img_path:
+            self._img, self._img_path = load_item(item), item.key
             self.st = None
         if self._img is None:
             return

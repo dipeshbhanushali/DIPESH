@@ -5,7 +5,7 @@ import numpy as np
 import pyqtgraph as pg
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from ...single_image_analysis import (load_image, prepare, remove_hot_pixels,
+from ...single_image_analysis import (load_item, prepare, remove_hot_pixels,
                                       to_float)
 from ..theme import AMBER, ISOLATED, MUTED, PHOSPHOR, RULE, TEXT
 from .base import Page, empty_overlay, labelled, qcolor
@@ -155,8 +155,8 @@ class ImagePage(Page):
             return
         ds, it = cur
         self.where.setText(f"{ds.name}  /  {it.name}")
-        self._img = load_image(it.path)
-        self._img_path = it.path
+        self._img = load_item(it)
+        self._img_path = it.key
         self._show(not self.c_lock.isChecked())
         self._overlays()
 
