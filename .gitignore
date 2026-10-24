@@ -21,3 +21,9 @@ ION_PIPELINE_REVIEW.md
 V2_AUDIT.md
 dipesh-v2-kit/
 dipesh-v2-kit.zip
+
+# screenshots: made by py docs/make_screenshots.py; only the two the README
+# shows are kept in git
+docs/screenshots/v2/*
+!docs/screenshots/v2/phosphor_1_image.png
+!docs/screenshots/v2/glass_strong_1_image.png

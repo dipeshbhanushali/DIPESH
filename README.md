@@ -116,8 +116,11 @@ In both, plot and image areas stay opaque, and every text colour keeps a
 contrast of at least 4.5:1 (WCAG AA) on the lightest glass it can sit on
 (muted text is a lighter grey in Strong for that). On Windows 11 the window
 frame also gets the system's Mica backdrop and a dark title bar. Screenshots
-of every page in each look: `docs/screenshots/v2/` (made by
-`py docs/make_screenshots.py`).
+of every page in each look are written to `docs/screenshots/v2/` by
+`py docs/make_screenshots.py` (only these two are kept in git):
+
+![The image page in Phosphor](docs/screenshots/v2/phosphor_1_image.png)
+![The image page in Glass, Strong](docs/screenshots/v2/glass_strong_1_image.png)
 
 **Move around.** Click a run, or use ↑ ↓ in the list, or PgUp / PgDn from
 anywhere. Ctrl+1 … Ctrl+6 switch analysis.
