@@ -128,7 +128,10 @@ class LearnPage(Page):
         room = self.width() - sum(self.sub.button(k).sizeHint().width()
                                   for k in range(len(self.lessons)))
         x = max(0, min(x, room))
-        self.indent.changeSize(x, 0)
+        # Maximum: it may shrink to nothing, so the indent never sets the
+        # page's (and the window's) minimum width
+        self.indent.changeSize(x, 0, QtWidgets.QSizePolicy.Maximum,
+                               QtWidgets.QSizePolicy.Minimum)
         self.subbar.layout().invalidate()
 
     def resizeEvent(self, e):

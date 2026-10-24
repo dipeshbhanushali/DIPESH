@@ -52,11 +52,7 @@ def test_phosphor_is_the_same_after_every_glass_look(filled, monkeypatch):
     for level in ("Subtle", "Strong"):
         win.set_glass_intensity(level, save=False)
         win.set_theme("Glass", save=False)
-        # every page but learn: learn lines its sub-bar up under its tab
-        # with a fixed spacer, so once shown in a wider window it keeps the
-        # window that wide (as in 1.0). Glass is wider, so that would change
-        # the window size, not the look. learn in Glass: test_themes.py.
-        for k in range(len(win.pages) - 1):
+        for k in range(len(win.pages)):
             win.show_page(k)
         for _ in range(5):                       # let the background drift
             clock[0] += 3.0
