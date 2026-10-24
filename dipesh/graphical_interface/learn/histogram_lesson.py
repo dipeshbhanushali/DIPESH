@@ -12,10 +12,10 @@ import numpy as np
 import pyqtgraph as pg
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from ..clustering_recognition import best_threshold, separation_score
-from ..graphical_interface.pages.base import FEATURE_LABELS, qcolor
-from ..graphical_interface.pages.histogram import HistogramPage
-from ..graphical_interface.theme import ISOLATED, PHOSPHOR, TEXT
+from ...clustering_recognition import best_threshold, separation_score
+from ..pages.base import FEATURE_LABELS, qcolor
+from ..pages.histogram import HistogramPage
+from ..theme import ISOLATED, PHOSPHOR, TEXT
 from .description import Description, feature_meaning
 from .embedded import embedded, take
 from .hover import HoverWatch, map_control

@@ -6,7 +6,7 @@ build the next one.
 
 ## 1. Ground rules
 
-- Work only inside `DIPESH/dipesh/learn/`. Anything outside (other source
+- Work only inside `DIPESH/dipesh/graphical_interface/learn/`. Anything outside (other source
   files, tests, packaging) needs the authors' permission first.
 - Reuse the program's own pieces (pages, panels, analysis functions); never
   write a second version of the analysis.

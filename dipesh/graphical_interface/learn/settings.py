@@ -9,10 +9,10 @@ reaches the image page and the analysis until Apply is pressed.
 
 from PySide6 import QtCore, QtWidgets
 
-from ..graphical_interface.session import Session
-from ..graphical_interface.theme import AMBER, muted
-from ..graphical_interface.widgets import DetectionPanel
-from ..graphical_interface.workers import LiveDetector
+from ..session import Session
+from ..theme import AMBER, muted
+from ..widgets import DetectionPanel
+from ..workers import LiveDetector
 
 WARNING = "Press to apply settings for the analysis"
 

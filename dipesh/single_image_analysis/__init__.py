@@ -4,7 +4,7 @@ Single-image analysis: from one camera image to a list of spots.
     params          DetectionParams, Spot, DetectionInfo
     loading         scan, scan_tree, load_image, load_item, parse_batman
     preprocessing   hot pixels, bit-depth scaling, background
-    detection       detect()
+    detection       detect() = candidates() + suppress()
     image_luminosity  integrated light on the MCP, count from light
 """
 
@@ -18,4 +18,4 @@ from .loading import (IMAGE_EXTS, STILL_EXTS, VIDEO_EXTS, READ_EXTS,
 from .preprocessing import (to_float, remove_hot_pixels, masked_background,
                             prepare)
 from .image_luminosity import image_luminosity
-from .detection import detect
+from .detection import candidates, detect, suppress

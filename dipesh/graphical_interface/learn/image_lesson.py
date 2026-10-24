@@ -15,11 +15,11 @@ import numpy as np
 import pyqtgraph as pg
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from ..graphical_interface.pages.base import empty_overlay, qcolor
-from ..graphical_interface.pages.image import phosphor_map
-from ..graphical_interface.theme import (AMBER, ISOLATED, PANEL, PHOSPHOR,
+from ..pages.base import empty_overlay, qcolor
+from ..pages.image import phosphor_map
+from ..theme import (AMBER, ISOLATED, PANEL, PHOSPHOR,
                                          RED, TEXT, plot_background)
-from ..single_image_analysis import load_item
+from ...single_image_analysis import load_item
 from .crops import aperture, event_order, quiet_window, stages, window_at
 from .textfile import LessonText
 

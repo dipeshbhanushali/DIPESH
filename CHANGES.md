@@ -21,6 +21,11 @@
   and follows the system's reduced-motion setting. Phosphor is unchanged,
   pixel for pixel (tested against pictures made before the change).
 - `docs/make_screenshots.py` writes a screenshot of every page in each look.
+- The learn package moved to `graphical_interface/learn/` (it uses Qt). Its
+  lessons now call the analysis's own functions (`candidates()`,
+  `suppress()`, `second_moments()`, `profile_fit()`) instead of copies, and a
+  test pins them to `detect()` and the stored numbers.
+- The learn page no longer keeps the window wide after it was shown wide.
 - A colour image that is not grey gives slightly different numbers than in
   1.0, which let the file decoder make it grey: the weights are now the same
   for every format.

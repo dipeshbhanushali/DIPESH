@@ -17,11 +17,12 @@ import numpy as np
 import pyqtgraph as pg
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from ..graphical_interface.pages.base import empty_overlay
-from ..graphical_interface.pages.spots import SPOT_COLS, SpotsPage
-from ..graphical_interface.theme import (AMBER, ISOLATED, PHOSPHOR, RED,
+from ..pages.base import empty_overlay
+from ..pages.spots import SPOT_COLS, SpotsPage
+from ..theme import (AMBER, ISOLATED, PHOSPHOR, RED,
                                          scope_plot)
-from ..single_image_analysis import load_item
+from ...features import profile_fit, second_moments
+from ...single_image_analysis import load_item
 from .crops import aperture, stages, window_at
 from .description import Description
 from .hover import HoverWatch, map_control
@@ -325,10 +326,7 @@ class SpotsLesson(QtWidgets.QWidget):
 
     def _ellipse(self, ap):
         """The 2σ ellipse of the spot's light, from its second moments."""
-        w, dx, dy, ws = ap.w, ap.dx, ap.dy, ap.wsum
-        cov = np.array([[(w * dx * dx).sum(), (w * dx * dy).sum()],
-                        [(w * dx * dy).sum(), (w * dy * dy).sum()]]) / ws
-        lam, vec = np.linalg.eigh(cov)
+        lam, vec = second_moments(ap)          # what eccentricity() uses
         lam = np.clip(lam, 0, None)
         t = np.linspace(0, 2 * np.pi, 90)
         pts = vec @ (2 * np.sqrt(lam)[:, None] * np.stack([np.cos(t), np.sin(t)]))
@@ -342,23 +340,20 @@ class SpotsLesson(QtWidgets.QWidget):
         item.setPen(pen)
         self.view._add(item)
         # the long axis
-        a = vec[:, 1] * 2 * np.sqrt(lam[1])
+        a = vec[:, 0] * 2 * np.sqrt(lam[0])
         self.view.line(ap.gx - a[0], ap.gy - a[1], ap.gx + a[0], ap.gy + a[1],
                        AMBER, 1.2)
 
     def _profile(self, ap, s):
         p = self.profile.getPlotItem()
-        rr = np.sqrt(ap.dx * ap.dx + ap.dy * ap.dy)
-        good = ap.w > 0
-        if good.sum() < 1:
+        r, y, k, c = profile_fit(ap)           # what profile_slope() uses
+        if len(r) < 1:
             return
-        y = np.log(ap.w[good] + 1e-6)
-        p.addItem(pg.ScatterPlotItem(rr[good], y, size=5, pen=None,
+        p.addItem(pg.ScatterPlotItem(r, y, size=5, pen=None,
                                      brush=pg.mkBrush(PHOSPHOR)))
         key = self.topic
-        if good.sum() >= 3:
-            k, c = np.polyfit(rr[good], y, 1)
-            xs = np.array([0, rr[good].max()])
+        if len(r) >= 3:
+            xs = np.array([0, r.max()])
             p.addItem(pg.PlotDataItem(xs, k * xs + c, pen=pg.mkPen(
                 AMBER, width=2.2 if key == "profile_slope" else 1.2)))
         if key == "radial_sigma":

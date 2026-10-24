@@ -12,9 +12,9 @@ from dataclasses import dataclass
 import cv2
 import numpy as np
 
-from ..features import grow
-from ..single_image_analysis import (masked_background, remove_hot_pixels,
-                                     to_float)
+from ...features import grow
+from ...single_image_analysis import (candidates, masked_background,
+                                      remove_hot_pixels, to_float)
 
 
 @dataclass
@@ -50,18 +50,11 @@ def stages(img, params):
     k = params.bg_blur_size if params.bg_blur_size % 2 else params.bg_blur_size + 1
     first_pass = cv2.GaussianBlur(cleaned, (k, k), 0)
     masked = (cleaned - first_pass) >= params.mask_nsigma * sigma
-    # the cuts of detection.detect, before the brightest-first suppression
-    thresh = (max(params.abs_thresh, params.n_sigma * sigma)
-              if params.adaptive else params.abs_thresh)
-    sum5 = cv2.filter2D(diff, -1, np.ones((5, 5), np.float32))
-    spread = sum5 / (diff + 1e-6)
-    n = params.nms_size if params.nms_size % 2 else params.nms_size + 1
-    diff_u8 = np.clip(diff, 0, 255).astype(np.uint8)
-    dil = cv2.dilate(diff_u8, np.ones((n, n), np.uint8)).astype(np.float32)
-    candidates = ((np.clip(diff, 0, 255) >= dil - 1) & (diff > thresh) &
-                  (sum5 > params.sum_thresh) & (spread > params.spread_min))
+    # the cuts of detect(), before the brightest-first suppression: the
+    # analysis's own function, not a copy
+    mask, sum5, _spread, thresh = candidates(diff, sigma, params)
     return Stages(camera, cleaned, hot, first_pass, masked, background, diff,
-                  sum5, candidates, float(sigma), float(thresh))
+                  sum5, mask, float(sigma), float(thresh))
 
 
 @dataclass(frozen=True)

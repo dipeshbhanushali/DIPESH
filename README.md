@@ -241,12 +241,14 @@ dipesh/
     params.py                DetectionParams, Spot, DetectionInfo
     loading.py               scan, scan_tree, load_image (pages, video frames), parse_batman
     preprocessing.py         hot pixels, bit-depth scaling, background
-    detection.py             detect(): threshold, shape cuts, one count per particle
+    detection.py             detect() = candidates() (threshold, shape cuts)
+                             + suppress() (one count per particle)
     image_luminosity.py      integrated light in the MCP circle, count from light
   features/                  what is measured on each spot, one file per feature
     aperture.py              local window, aperture grown to the plateau
     luminosity.py  area.py  radial_sigma.py  concentration.py
     eccentricity.py  profile_slope.py  isolation.py
+                             (second_moments, profile_fit: shared with learn)
   clustering_recognition/    telling populations apart
     separation.py            separation score, best cut
     pca.py                   PCA, feature matrix, covariance ellipse
@@ -259,6 +261,8 @@ dipesh/
   graphical_interface/       the desktop app; computes nothing itself
     app.py  main_window.py  theme.py  glass.py  session.py  workers.py  widgets.py
     pages/                   image, spots, histogram, pca, plots, pickup
+    learn/                   the learn page: lessons that draw the analysis's
+                             own numbers; texts/*.md are its words
 build/                       dipesh.spec (PyInstaller), installer.iss (Inno Setup),
                              build_windows.bat
 tests/                       pytest, one folder per package above
@@ -270,8 +274,8 @@ report/                      make_report.py -> report.tex, build/fig_*.pdf
 pyproject.toml  requirements.txt  CITATION.cff  CHANGES.md  LICENSE
 ```
 
-Qt is imported only under `graphical_interface/`; everything else can be used
-from a script or a notebook without a display.
+Qt is imported only under `graphical_interface/` (a test checks every file);
+everything else can be used from a script or a notebook without a display.
 
 ## Tests
 

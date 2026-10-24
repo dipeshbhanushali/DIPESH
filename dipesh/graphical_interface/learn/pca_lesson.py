@@ -12,11 +12,11 @@ import numpy as np
 import pyqtgraph as pg
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from ..clustering_recognition import pca, separation_score, spot_matrix
-from ..graphical_interface.pages.base import (FEATURE_LABELS, LOG_BY_DEFAULT,
+from ...clustering_recognition import pca, separation_score, spot_matrix
+from ..pages.base import (FEATURE_LABELS, LOG_BY_DEFAULT,
                                               qcolor)
-from ..graphical_interface.pages.pca import PcaPage
-from ..graphical_interface.theme import AMBER, ISOLATED, PHOSPHOR, TEXT
+from ..pages.pca import PcaPage
+from ..theme import AMBER, ISOLATED, PHOSPHOR, TEXT
 from .description import Description, feature_meaning
 from .embedded import embedded, take
 from .hover import HoverWatch, map_control

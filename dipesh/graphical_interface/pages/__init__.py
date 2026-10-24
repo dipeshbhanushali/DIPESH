@@ -8,7 +8,7 @@ The seven analyses on the top bar.
     pca        all shape and brightness features at once
     plots      any run quantity against any Batman parameter, averaged, fitted
     pickup     PicoScope traces for the current run, RF notch, pulse timing
-    learn      (in dipesh.learn) under construction
+    learn      (in graphical_interface/learn) under construction
 """
 
 from .base import Page
@@ -18,7 +18,7 @@ from .histogram import HistogramPage
 from .pca import PcaPage
 from .plots import PlotsPage
 from .pickup import PickupPage
-from ...learn import LearnPage
+from ..learn import LearnPage
 
 
 def make_pages(session):

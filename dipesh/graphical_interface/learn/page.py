@@ -6,7 +6,7 @@ bar, starting below the "learn" tab, the way a sub-menu hangs from its menu.
 
 from PySide6 import QtCore, QtWidgets
 
-from ..graphical_interface.pages.base import Page
+from ..pages.base import Page
 from .histogram_lesson import HistogramLesson
 from .hover import HoverWatch
 from .image_lesson import ImageLesson

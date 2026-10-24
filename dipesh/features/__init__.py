@@ -17,10 +17,10 @@ import numpy as np
 from .aperture import Aperture, grow
 from .area import area
 from .concentration import concentration
-from .eccentricity import eccentricity
+from .eccentricity import eccentricity, second_moments
 from .isolation import is_isolated, nn_dist
 from .luminosity import luminosity
-from .profile_slope import profile_slope
+from .profile_slope import profile_fit, profile_slope
 from .radial_sigma import radial_sigma
 
 
