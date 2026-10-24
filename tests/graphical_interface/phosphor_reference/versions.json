@@ -1,0 +1,6 @@
+{
+ "qt": "6.11.2",
+ "pyside6": "6.11.2",
+ "pyqtgraph": "0.14.0",
+ "platform": "win32"
+}
