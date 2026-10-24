@@ -10,8 +10,11 @@ something to show. Your own settings are not touched: the program's settings
 go to the temporary folder too. The window shows on the screen for about
 half a minute while the pictures are taken.
 
-Files: <theme>_<k>_<page>.png for each page, <theme>_learn_<k>_<lesson>.png
-for each lesson of the learn page, <theme>_dialog_export.png.
+Looks: phosphor, glass_strong and glass_subtle (the background drift is off,
+so the pictures do not depend on the moment they are taken).
+Files: <look>_<k>_<page>.png for each page, <look>_learn_<k>_<lesson>.png
+for each lesson of the learn page, <look>_dialog_export.png, and for Glass
+<look>_menu_view.png.
 """
 
 import argparse
@@ -94,8 +97,13 @@ def main(argv=None):
     wait(win)
 
     written = []
-    for name in theme.THEMES:
-        win.set_theme(name)
+    win.set_animation(False, save=False)
+    looks = (("phosphor", "Phosphor", "Strong"),
+             ("glass_strong", "Glass", "Strong"),
+             ("glass_subtle", "Glass", "Subtle"))
+    for name, look, level in looks:
+        win.set_glass_intensity(level, save=False)
+        win.set_theme(look, save=False)
         wait(win)
         for k, page in enumerate(win.pages):
             win.show_page(k)
@@ -105,22 +113,30 @@ def main(argv=None):
                     page.show_lesson(j)
                     wait(win)
                     title = getattr(lesson, "title", str(j))
-                    path = os.path.join(out, f"{slug(name)}_learn_{j + 1}_"
+                    path = os.path.join(out, f"{name}_learn_{j + 1}_"
                                              f"{slug(title)}.png")
                     win.grab().save(path)
                     written.append(path)
                 continue
-            path = os.path.join(out, f"{slug(name)}_{k + 1}_{page.title}.png")
+            path = os.path.join(out, f"{name}_{k + 1}_{page.title}.png")
             win.grab().save(path)
             written.append(path)
+        if look == "Glass":
+            menu = win.view_menu
+            menu.popup(win.mapToGlobal(win.view_btn.geometry().bottomLeft()))
+            wait(win)
+            path = os.path.join(out, f"{name}_menu_view.png")
+            menu.grab().save(path)
+            written.append(path)
+            menu.hide()
         dlg = ExportDialog(win, win.s)
         dlg.show()
         wait(win)
-        path = os.path.join(out, f"{slug(name)}_dialog_export.png")
+        path = os.path.join(out, f"{name}_dialog_export.png")
         dlg.grab().save(path)
         written.append(path)
         dlg.close()
-    win.set_theme("Phosphor")
+    win.set_theme("Phosphor", save=False)
     win.close()
     for p in written:
         print("wrote", os.path.relpath(p, ROOT))

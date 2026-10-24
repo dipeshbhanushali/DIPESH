@@ -99,13 +99,24 @@ many were skipped.
   values are kept and the integer rule above applies to them, so a float image
   on the 0–255 scale counts exactly like the same image stored as 8 bit.
 
-**Look.** *View* offers two themes; the choice is remembered.
+**Look.** *View* offers two themes; the choices are remembered.
 *Phosphor* (the default) is the 1.0 look: a green-black scope screen.
-*Glass* puts the panels on frosted glass over a dark backdrop with a soft
-green/teal glow; plot and image areas stay opaque, and the text, data and
-dataset colours are the same as in Phosphor. On Windows 11 the window frame
-also gets the system's Mica backdrop and a dark title bar. Screenshots of every
-page in both themes: `docs/screenshots/v2/` (made by
+*Glass* has two intensities (*View > Glass intensity*):
+
+- *Strong* (the default): liquid glass. Large soft colour blobs (phosphor
+  green, teal, a little violet) drift slowly behind clear glass panels with a
+  strong blur, a lit top edge, a gradient border, rounded corners and a
+  shadow; buttons, fields and sliders are small glass pills; menus and
+  dialogs are glass too. *View > Animate background* turns the drift off (it
+  is also off when Windows asks for fewer animations), and it never redraws
+  while you move a slider or the analysis is working.
+- *Subtle*: frosted panels over a dark backdrop with a soft glow.
+
+In both, plot and image areas stay opaque, and every text colour keeps a
+contrast of at least 4.5:1 (WCAG AA) on the lightest glass it can sit on
+(muted text is a lighter grey in Strong for that). On Windows 11 the window
+frame also gets the system's Mica backdrop and a dark title bar. Screenshots
+of every page in each look: `docs/screenshots/v2/` (made by
 `py docs/make_screenshots.py`).
 
 **Move around.** Click a run, or use ↑ ↓ in the list, or PgUp / PgDn from

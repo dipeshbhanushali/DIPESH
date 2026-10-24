@@ -15,7 +15,12 @@
   default) and Glass (frosted panels over a dark backdrop with a soft
   green/teal glow; plots stay opaque; text contrast at least WCAG AA). On
   Windows 11, Glass also asks for the Mica frame and a dark title bar.
-- `docs/make_screenshots.py` writes a screenshot of every page in both themes.
+- Glass got two intensities: Strong (new default) is liquid glass over
+  slowly drifting colour blobs, with glass controls, menus and dialogs and
+  framed plots; Subtle is the first Glass look. The drift can be turned off
+  and follows the system's reduced-motion setting. Phosphor is unchanged,
+  pixel for pixel (tested against pictures made before the change).
+- `docs/make_screenshots.py` writes a screenshot of every page in each look.
 - A colour image that is not grey gives slightly different numbers than in
   1.0, which let the file decoder make it grey: the weights are now the same
   for every format.

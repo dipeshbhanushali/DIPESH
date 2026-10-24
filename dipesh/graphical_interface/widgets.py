@@ -1,6 +1,7 @@
 """Widgets around the pages: the detection panel, the list of datasets, the
 console and the export dialog."""
 
+import collections
 import os
 import time
 
@@ -8,7 +9,7 @@ from PySide6 import QtCore, QtGui, QtWidgets
 
 from ..single_image_analysis import (READ_EXTS, VIDEO_EXTS, DetectionParams,
                                      frame_count, scan, scan_tree)
-from .theme import AMBER, MUTED, PHOSPHOR, RED, TEXT, glow, marker_icon
+from .theme import AMBER, PHOSPHOR, RED, TEXT, glow, marker_icon, muted
 
 
 class ParamSlider(QtWidgets.QWidget):
@@ -460,7 +461,7 @@ class Sidebar(QtWidgets.QWidget):
                     tot += r.n
                     node.setText(1, str(r.n))
                     node.setForeground(1, QtGui.QBrush(
-                        QtGui.QColor(MUTED if stale else TEXT)))
+                        QtGui.QColor(muted() if stale else TEXT)))
                     node.setToolTip(1, "settings changed since this was "
                                        "counted — run all again" if stale
                                     else "")
@@ -570,15 +571,32 @@ class Console(QtWidgets.QPlainTextEdit):
         self.setReadOnly(True)
         self.setMaximumBlockCount(2000)
         self.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.lines = collections.deque(maxlen=2000)   # (stamp, level, msg)
         session.logged.connect(self.add)
 
     def add(self, level, msg):
-        stamp = time.strftime("%H:%M:%S")
+        line = (time.strftime("%H:%M:%S"), level, msg)
+        self.lines.append(line)
+        self._show(*line)
+
+    def _show(self, stamp, level, msg):
         col = self.COLOURS.get(level, TEXT)
         safe = (msg.replace("&", "&amp;").replace("<", "&lt;")
                    .replace(">", "&gt;"))
-        self.appendHtml(f'<span style="color:{MUTED}">{stamp}</span>&nbsp;&nbsp;'
-                        f'<span style="color:{col}">{safe}</span>')
+        self.appendHtml(f'<span style="color:{muted()}">{stamp}</span>'
+                        f'&nbsp;&nbsp;<span style="color:{col}">{safe}</span>')
+
+    def inset(self, edge, margin):
+        """Keep the text edge px inside the widget (on a glass panel) with a
+        margin round the text."""
+        self.setViewportMargins(edge, edge, edge, edge)
+        self.document().setDocumentMargin(margin)
+
+    def restyle(self):
+        """Write the log again in the colours of the look in use."""
+        self.clear()
+        for line in self.lines:
+            self._show(*line)
 
 
 class ExportDialog(QtWidgets.QDialog):

@@ -6,7 +6,7 @@ from PySide6 import QtCore, QtGui, QtWidgets
 
 from ...clustering_recognition import (ellipse_points, pca, separation_score,
                                        spot_matrix)
-from ..theme import MUTED, PANEL, PHOSPHOR, RULE, TEXT, scope_plot
+from ..theme import MUTED, PANEL, PHOSPHOR, RULE, TEXT, muted, scope_plot
 from .base import (FEATURE_LABELS, LOG_BY_DEFAULT, Page, add_legend, combo,
                    empty_overlay, form, labelled, qcolor, side_column)
 
@@ -140,7 +140,7 @@ class PcaPage(Page):
             "nearest-neighbour distance", "nn dist")) for k, f in
             enumerate(feats)]])
 
-        lines = [f"<p style='color:{MUTED}; margin-bottom:2px'>variance "
+        lines = [f"<p style='color:{muted()}; margin-bottom:2px'>variance "
                  f"explained</p><p style='margin-top:0'>" +
                  "<br>".join(f"PC{k + 1}  {v:5.1%}" for k, v in
                              enumerate(ev[:4])) + "</p>"]
@@ -148,10 +148,10 @@ class PcaPage(Page):
             (na, a), (nb, b) = pc1
             sep = separation_score(a, b)
             lines.insert(0, f"<p style='color:{PHOSPHOR}; font-size:20pt; "
-                         f"margin:0'>{sep:.2f}</p><p style='color:{MUTED}; "
+                         f"margin:0'>{sep:.2f}</p><p style='color:{muted()}; "
                          f"margin-top:0'>PC1 separation, {na} vs {nb}</p>")
         top = np.argsort(-np.abs(load[0]))[:3]
-        lines.append(f"<p style='color:{MUTED}; margin-bottom:2px'>PC1 is "
+        lines.append(f"<p style='color:{muted()}; margin-bottom:2px'>PC1 is "
                      f"mostly</p><p style='margin-top:0'>" + "<br>".join(
                          f"{'+' if load[0][k] > 0 else '−'} "
                          f"{FEATURE_LABELS[feats[k]]}" for k in top) + "</p>")

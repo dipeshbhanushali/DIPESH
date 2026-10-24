@@ -7,7 +7,7 @@ import pyqtgraph as pg
 from PySide6 import QtCore, QtWidgets
 
 from ...clustering_recognition import best_threshold, separation_score
-from ..theme import AMBER, MUTED, PHOSPHOR, scope_plot
+from ..theme import AMBER, MUTED, PHOSPHOR, muted, scope_plot
 from .base import (FEATURE_LABELS, LOG_BY_DEFAULT, Page, add_legend, combo,
                    empty_overlay, form, labelled, qcolor, side_column)
 
@@ -152,11 +152,11 @@ class HistogramPage(Page):
                        "partly separates" if sep >= 0.5 else "does not separate")
             self.stats.setText(
                 f"<p style='color:{PHOSPHOR}; font-size:20pt; margin:0'>"
-                f"{sep:.2f}</p><p style='color:{MUTED}; margin-top:0'>"
+                f"{sep:.2f}</p><p style='color:{muted()}; margin-top:0'>"
                 f"separation score<br>{feat} {verdict}</p>"
                 f"<p>best cut {shown:.4g}<br>{lo} above it: {ea:.0%}<br>"
                 f"{hi} below it: {eb:.0%}</p>"
-                f"<p style='color:{MUTED}'>score = |Δmean| / (σ₁ + σ₂)</p>")
+                f"<p style='color:{muted()}'>score = |Δmean| / (σ₁ + σ₂)</p>")
             if self.cut.isChecked():
                 line = pg.InfiniteLine(t, angle=90, pen=pg.mkPen(
                     AMBER, width=1.5, style=QtCore.Qt.DashLine),

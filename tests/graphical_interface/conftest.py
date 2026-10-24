@@ -7,6 +7,7 @@ import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest                                                      # noqa: E402
+import shiboken6                                                   # noqa: E402
 from PySide6 import QtCore, QtWidgets                              # noqa: E402
 
 import make_testdata                                               # noqa: E402
@@ -56,6 +57,8 @@ def window(styled_app, qtbot, qt_messages, monkeypatch, tmp_path):
     QtCore.QSettings.setPath(QtCore.QSettings.IniFormat,
                              QtCore.QSettings.UserScope, str(tmp_path / "qs"))
     from dipesh.graphical_interface.main_window import MainWindow
+    app = QtWidgets.QApplication.instance()
+    already = {shiboken6.getCppPointer(w)[0] for w in app.topLevelWidgets()}
     win = MainWindow()
     qtbot.addWidget(win)
     win.show()
@@ -63,6 +66,14 @@ def window(styled_app, qtbot, qt_messages, monkeypatch, tmp_path):
     yield win
     settle(win, qtbot)
     win.close()
+    # delete it, and every top-level widget made during the test (pyqtgraph
+    # keeps its context menus and colour dialogs without a parent, learn a
+    # hidden page): closed widgets stay alive, and every later change of the
+    # style sheet would restyle all of them, test after test
+    for w in app.topLevelWidgets():
+        if shiboken6.getCppPointer(w)[0] not in already:
+            w.deleteLater()
+    QtWidgets.QApplication.sendPostedEvents(None, QtCore.QEvent.DeferredDelete)
     QtWidgets.QApplication.processEvents()
 
 

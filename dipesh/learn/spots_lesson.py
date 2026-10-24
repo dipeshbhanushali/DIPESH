@@ -192,7 +192,7 @@ class SpotsLesson(QtWidgets.QWidget):
                    self._row_spot(r)[1] is cand[1] for r in range(t.rowCount()))
 
     def _later(self, *_):
-        QtCore.QTimer.singleShot(0, self._draw)
+        QtCore.QTimer.singleShot(0, self, self._draw)   # not after self is gone
 
     def showEvent(self, e):
         super().showEvent(e)

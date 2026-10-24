@@ -56,6 +56,8 @@ def shots(win):
     """{name: QImage} of every page and every learn lesson. The console is
     emptied first: it holds clock times and run times."""
     from PySide6 import QtWidgets
+    QtWidgets.QApplication.processEvents()       # minimum sizes up to date
+    win.centralWidget().layout().activate()
     win.resize(*SIZE)
     win.console.clear()
     out = {}

@@ -9,8 +9,10 @@ Layout
     right   : detection settings (image and spots pages)
     bottom  : console
 
-View > Theme switches between the Phosphor and Glass looks (theme.py); the
-choice is kept in QSettings under "theme".
+View switches between the Phosphor and Glass looks (theme.py, glass.py),
+sets the Glass intensity (Subtle or Strong) and turns the drifting Strong
+background on or off. The choices are kept in QSettings under "theme",
+"glass_intensity" and "animate_background".
 """
 
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -18,9 +20,12 @@ from PySide6 import QtCore, QtGui, QtWidgets
 from .. import __version__, _about
 from .pages import make_pages
 from .session import Session
-from .glass import Backdrop, Frost, windows_frame
-from .theme import (APP_NAME, MUTED, THEMES, TUBE, current, glow,
-                    restyle_plots, use_theme)
+from . import glass as glass_ui
+from .glass import (Backdrop, Frost, PopupGlass, plot_frames, reduced_motion,
+                    windows_frame)
+from .theme import (APP_NAME, INTENSITIES, PHOSPHOR, THEMES, TUBE, current,
+                    glow, intensity, muted, restyle_plots, set_intensity,
+                    use_theme)
 from .widgets import Console, DetectionPanel, ExportDialog, Sidebar
 from .workers import ExportWorker, LiveDetector, RunAllWorker
 
@@ -36,7 +41,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._thread = self._worker = None
 
         # top bar
-        bar = QtWidgets.QFrame()
+        bar = self.bar = QtWidgets.QFrame()
         bar.setObjectName("bar")
         hb = QtWidgets.QHBoxLayout(bar)
         hb.setContentsMargins(0, 0, 10, 0)
@@ -128,11 +133,21 @@ class MainWindow(QtWidgets.QMainWindow):
         # the panels that turn to frosted glass in the Glass theme
         self.frost = Frost(root, [bar, self.sidebar, self.stack,
                                   self.detection, self.console])
+        self.frost.framed.append(plot_frames(self.stack))
+        self.frost.extras.append(self._tab_glow)
+        self.popup_glass = PopupGlass(root)       # menus and dialogs
+        # the background never drifts while the analysis works
+        root.busy = lambda: (self._thread is not None or QtCore.QThreadPool
+                             .globalInstance().activeThreadCount() > 0)
 
         self._shortcuts()
         self._menus()
-        self.set_theme(str(QtCore.QSettings().value("theme", "Phosphor")),
-                       save=False)
+        st = QtCore.QSettings()
+        self.glass_intensity = str(st.value("glass_intensity", "Strong"))
+        if self.glass_intensity not in INTENSITIES:
+            self.glass_intensity = "Strong"
+        self.animate_on = st.value("animate_background", True, type=bool)
+        self.set_theme(str(st.value("theme", "Phosphor")), save=False)
         self.s.paramsChanged.connect(self._update_run_button)
         self.s.resultsChanged.connect(self._update_run_button)
         self.s.datasetsChanged.connect(self._update_run_button)
@@ -145,6 +160,7 @@ class MainWindow(QtWidgets.QMainWindow):
     # navigation
     def show_page(self, k):
         self.nav.button(k).setChecked(True)
+        self.bar.update()                         # the tab glow moves
         self.stack.setCurrentIndex(k)
         page = self.pages[k]
         self.detection.setVisible(page.uses_detection)
@@ -155,7 +171,8 @@ class MainWindow(QtWidgets.QMainWindow):
         k = next(i for i, p in enumerate(self.pages) if p.title == title)
         self.show_page(k)
         if spot is not None and hasattr(self.pages[k], "focus"):
-            QtCore.QTimer.singleShot(120, lambda: self.pages[k].focus(*spot))
+            QtCore.QTimer.singleShot(120, self.pages[k],
+                                     lambda: self.pages[k].focus(*spot))
 
     def _shortcuts(self):
         """Shortcuts with no menu entry. The others belong to the actions in
@@ -205,6 +222,19 @@ class MainWindow(QtWidgets.QMainWindow):
             a.setCheckable(True)
             group.addAction(a)
             self.theme_actions[name] = a
+        v.addSeparator()
+        gi = self.intensity_menu = v.addMenu("Glass intensity")
+        group = QtGui.QActionGroup(self)
+        self.intensity_actions = {}
+        for level in INTENSITIES:
+            a = action(gi, level, lambda _=False, n=level:
+                       self.set_glass_intensity(n))
+            a.setCheckable(True)
+            group.addAction(a)
+            self.intensity_actions[level] = a
+        self.animate_action = action(v, "Animate background",
+                                     lambda on: self.set_animation(on))
+        self.animate_action.setCheckable(True)
         self.view_btn.setMenu(v)
         h = self.help_menu = QtWidgets.QMenu(self)
         action(h, "Keyboard shortcuts", self._keys)
@@ -217,31 +247,85 @@ class MainWindow(QtWidgets.QMainWindow):
         datasets, the current image and the results stay as they are."""
         if name not in THEMES:
             name = "Phosphor"
+        self._look(name, self.glass_intensity)
+        if save:
+            QtCore.QSettings().setValue("theme", name)
+
+    def set_glass_intensity(self, level, save=True):
+        """Subtle (frosted, the first Glass look) or Strong (liquid glass).
+        Kept for when Glass is on."""
+        if level not in INTENSITIES:
+            level = "Strong"
+        self.glass_intensity = level
+        self._look(current(), level)
+        if save:
+            QtCore.QSettings().setValue("glass_intensity", level)
+
+    def set_animation(self, on, save=True):
+        """Let the Strong background drift (never when the system asks for
+        reduced motion)."""
+        self.animate_on = bool(on)
+        self.animate_action.setChecked(self.animate_on)
+        self.backdrop.animate(self.animate_on and not reduced_motion())
+        if save:
+            QtCore.QSettings().setValue("animate_background", self.animate_on)
+
+    def _look(self, name, level):
         glass = name == "Glass"
-        if name != current():
-            use_theme(name)
+        strong = glass and level == "Strong"
+        was_muted = muted()
+        if name != current() or (glass and level != intensity()):
+            use_theme(name, glass_intensity=level)
+        elif level != intensity():
+            set_intensity(level)                  # Phosphor: nothing to redraw
         self.backdrop.glass = glass
-        for w in self.frost.widgets:              # room inside the rounded edge
+        self.backdrop.intensity = level
+        self.popup_glass.set_on(strong)
+        pad = glass_ui.S_INSET + 6 if strong else 6 if glass else 0
+        # room inside the rounded edge (a stacked widget ignores its own
+        # margins: its pages get them)
+        boxes = [w for w in self.frost.widgets if w is not self.stack] +             [self.stack.widget(k) for k in range(self.stack.count())]
+        for w in boxes:
             lay = w.layout()
             if lay is not None:
                 if not hasattr(w, "_margins"):
                     w._margins = lay.contentsMargins()
                 m = w._margins
-                pad = 6 if glass else 0
                 lay.setContentsMargins(m.left() + pad, m.top() + pad,
                                        m.right() + pad, m.bottom() + pad)
         restyle_plots(self)
-        self.console.document().setDocumentMargin(10 if glass else 4)
+        self.console.inset(glass_ui.S_INSET + 4 if strong else 0,
+                           4 if strong else 10 if glass else 4)
+        if muted() != was_muted:                  # text drawn in code
+            self.console.restyle()
+            self.sidebar.update_counts()
+            for page in self.pages:
+                page.mark()
         self.theme_actions[name].setChecked(True)
+        self.intensity_actions[level].setChecked(True)
+        self.animate_action.setChecked(self.animate_on)
+        self.backdrop.animate(self.animate_on and not reduced_motion())
         if self.isVisible():
             windows_frame(self, glass)
-        if save:
-            QtCore.QSettings().setValue("theme", name)
         self.update()
 
-    def showEvent(self, e):
-        super().showEvent(e)
-        windows_frame(self, self.backdrop.glass)
+    def _tab_glow(self, w, p):
+        """Strong glass: a soft phosphor glow under the selected tab."""
+        b = self.nav.checkedButton()
+        if w is not self.bar or b is None:
+            return
+        g = b.geometry()
+        p.save()
+        p.translate(g.center().x(), g.bottom() - 1)
+        p.scale(g.width() * 0.55, 14)
+        glow_ = QtGui.QRadialGradient(0, 0, 1)
+        c = QtGui.QColor(PHOSPHOR)
+        c.setAlpha(110)
+        glow_.setColorAt(0, c)
+        c.setAlpha(0)
+        glow_.setColorAt(1, c)
+        p.fillRect(QtCore.QRectF(-1, -1, 2, 1), glow_)
+        p.restore()
 
     def _keys(self):
         QtWidgets.QMessageBox.information(self, "Keyboard shortcuts",
@@ -256,7 +340,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _about(self):
         """Everything shown comes from dipesh/_about.py."""
-        rows = "".join(f"<tr><td style='color:{MUTED}; padding-right:14px'>"
+        rows = "".join(f"<tr><td style='color:{muted()}; padding-right:14px'>"
                        f"{label}</td><td>{text}</td></tr>"
                        for label, text in _about.about_lines())
         QtWidgets.QMessageBox.about(self, f"About {_about.NAME}",
@@ -383,4 +467,13 @@ class MainWindow(QtWidgets.QMainWindow):
         if self._thread is not None:
             self._thread.quit()
             self._thread.wait(5000)
+        self.backdrop.animate(False)              # no drift, no app-wide
+        self.popup_glass.set_on(False)            # event watching when closed
         e.accept()
+
+    def showEvent(self, e):
+        super().showEvent(e)
+        windows_frame(self, self.backdrop.glass)
+        strong = self.backdrop.strong             # back after a close
+        self.popup_glass.set_on(strong)
+        self.backdrop.animate(self.animate_on and strong and not reduced_motion())

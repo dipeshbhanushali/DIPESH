@@ -108,7 +108,7 @@ class PcaLesson(QtWidgets.QWidget):
 
     def _after(self):
         self.extra = []
-        QtCore.QTimer.singleShot(0, self._draw)
+        QtCore.QTimer.singleShot(0, self, self._draw)   # not after self is gone
 
     # numbers: what the page computes, the same way
     def _compute(self):

@@ -125,7 +125,7 @@ class HistogramLesson(QtWidgets.QWidget):
 
     def _after(self):
         self.extra = []                  # the page's redraw cleared them
-        QtCore.QTimer.singleShot(0, self._draw)
+        QtCore.QTimer.singleShot(0, self, self._draw)   # not after self is gone
 
     # numbers
     def _data(self):

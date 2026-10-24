@@ -7,7 +7,7 @@ import pyqtgraph as pg
 from PySide6 import QtCore, QtWidgets
 
 from ...results import RUN_METRICS, average_xy, fit_curve
-from ..theme import MUTED, PANEL, scope_plot
+from ..theme import MUTED, PANEL, muted, scope_plot
 from .base import (Page, add_legend, combo, empty_overlay, form, labelled,
                    qcolor, side_column)
 
@@ -210,7 +210,7 @@ class PlotsPage(Page):
                                     zip("abc", res["params"]))
                     notes.append(f"<p><span style='color:{ds.colour}'>"
                                  f"{ds.name}</span><br>{res['formula']}<br>"
-                                 f"{par}<br><span style='color:{MUTED}'>R² = "
+                                 f"{par}<br><span style='color:{muted()}'>R² = "
                                  f"{res['r2']:.3f}</span></p>")
                 else:
                     notes.append(f"<p><span style='color:{ds.colour}'>"

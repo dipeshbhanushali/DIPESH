@@ -10,7 +10,7 @@ reaches the image page and the analysis until Apply is pressed.
 from PySide6 import QtCore, QtWidgets
 
 from ..graphical_interface.session import Session
-from ..graphical_interface.theme import AMBER, MUTED
+from ..graphical_interface.theme import AMBER, muted
 from ..graphical_interface.widgets import DetectionPanel
 from ..graphical_interface.workers import LiveDetector
 
@@ -104,7 +104,7 @@ class LearnSettings(QtCore.QObject):
     def _state(self, *_):
         p = self.pending
         self.button.setEnabled(p)
-        self.warning.setStyleSheet(f"color: {AMBER if p else MUTED};")
+        self.warning.setStyleSheet(f"color: {AMBER if p else muted()};")
         self.warning.setToolTip("These settings differ from the analysis's"
                                 if p else "These are the analysis's settings")
 

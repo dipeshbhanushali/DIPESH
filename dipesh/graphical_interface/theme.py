@@ -4,9 +4,14 @@ The look. Two themes, picked in View > Theme and kept in the settings:
   Phosphor  (default) a phosphor scope. A green-black tube face, faint green
             graticules on the plots, and the live count glowing P43 green
             (~545 nm) - the colour the MCP screen actually emits.
-  Glass     the same colours for text, data and accents, on frosted panels
-            over a dark backdrop with a soft green/teal glow (glass.py).
+  Glass     the same colours for data and accents, on glass panels over
+            a dark backdrop (glass.py), at two intensities (View > Glass
+            intensity): Subtle, frosted panels over a soft glow; Strong
+            (default), clear liquid glass over drifting colour blobs, with
+            glass controls and a lighter grey for muted text (GLASS_MUTED).
             Plot and image areas stay opaque.
+
+Code that writes muted text itself calls muted(), so it follows the theme.
 """
 
 import os
@@ -44,11 +49,38 @@ THEMES = ("Phosphor", "Glass")
 PLOT = {"Phosphor": PANEL, "Glass": "#0A1514"}
 GRID_LINES = {"Phosphor": RULE, "Glass": "#1F3A33"}
 _current = "Phosphor"
+INTENSITIES = ("Subtle", "Strong")
+_intensity = "Strong"
+# muted text on Strong glass: lighter than MUTED, so it keeps 4.5:1 on the
+# lightest glass it can sit on (tests/graphical_interface/test_themes.py)
+GLASS_MUTED = "#B3C6BA"
 
 
 def current():
     """The theme in use: "Phosphor" or "Glass"."""
     return _current
+
+
+def intensity():
+    """The Glass intensity: "Subtle" or "Strong"."""
+    return _intensity
+
+
+def strong():
+    return _current == "Glass" and _intensity == "Strong"
+
+
+def muted():
+    """The colour of muted text in the look in use."""
+    return GLASS_MUTED if strong() else MUTED
+
+
+def set_intensity(level):
+    """Remember the Glass intensity without restyling (with Phosphor on)."""
+    global _intensity
+    if level not in INTENSITIES:
+        raise ValueError(f"no intensity {level!r}")
+    _intensity = level
 
 
 def plot_background():
@@ -257,16 +289,106 @@ QTabBar::tab:selected {{ background: {_G_SELECT}; }}
 """
 
 
-def stylesheet(name=None):
+# Glass, Strong: these rules after GLASS_QSS. Controls become small glass
+# pills: a light fill, lighter at the top, a border lighter along the top.
+_P_FILL = ("qlineargradient(x1:0, y1:0, x2:0, y2:1, "
+           "stop:0 rgba(255, 255, 255, 30), stop:0.12 rgba(255, 255, 255, 18), "
+           "stop:1 rgba(255, 255, 255, 10))")
+_P_HOVER = ("qlineargradient(x1:0, y1:0, x2:0, y2:1, "
+            "stop:0 rgba(255, 255, 255, 44), stop:0.12 rgba(255, 255, 255, 26), "
+            "stop:1 rgba(255, 255, 255, 16))")
+_P_EDGE = "rgba(255, 255, 255, 36)"
+_P_TOP = "rgba(255, 255, 255, 96)"
+_S_FIELD = "rgba(0, 0, 0, 150)"
+STRONG_QSS = f"""
+QLabel#muted, QLabel#empty, QLabel#brandsub {{ color: {GLASS_MUTED}; }}
+QPushButton#nav, QToolButton#menu {{ color: {GLASS_MUTED}; }}
+QPushButton#nav:hover, QToolButton#menu:hover {{ color: {TEXT}; }}
+QPushButton#nav:checked {{ color: {PHOSPHOR}; }}
+QHeaderView::section {{ color: {GLASS_MUTED}; background: rgba(255, 255, 255, 12);
+    border: none; border-bottom: 1px solid {_P_EDGE}; }}
+QStatusBar {{ color: {GLASS_MUTED}; }}
+QPushButton {{ background: {_P_FILL}; border: 1px solid {_P_EDGE};
+    border-top-color: {_P_TOP}; border-radius: 12px; padding: 4px 6px; }}
+QPushButton:hover {{ background: {_P_HOVER}; border-color: rgba(255, 255, 255, 60);
+    border-top-color: rgba(255, 255, 255, 140); }}
+QPushButton:pressed {{ background: rgba(156, 255, 87, 46); }}
+QPushButton:focus {{ border-color: rgba(156, 255, 87, 150); }}
+QPushButton:disabled {{ color: {GLASS_MUTED}; background: {_P_FILL};
+    border-color: {_P_EDGE}; }}
+QPushButton#nav {{ background: transparent; border: none; border-radius: 0;
+    border-bottom: 2px solid transparent; padding: 11px 13px 9px 13px; }}
+QPushButton#nav:checked {{ border-bottom: 2px solid {PHOSPHOR}; }}
+QPushButton#primary {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+    stop:0 #C9FF9E, stop:0.15 {PHOSPHOR}, stop:1 #86E64A); color: {TUBE};
+    border: 1px solid rgba(255, 255, 255, 120); border-radius: 12px; }}
+QPushButton#primary:hover {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+    stop:0 #DDFFC0, stop:0.15 #B8FF85, stop:1 {PHOSPHOR}); }}
+QPushButton#primary:disabled {{ background: rgba(255, 255, 255, 18);
+    color: {GLASS_MUTED}; border: 1px solid {_P_EDGE}; }}
+QPushButton#stale {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+    stop:0 #FFD08A, stop:0.15 {AMBER}, stop:1 #F0A030); color: {TUBE};
+    border: 1px solid rgba(255, 255, 255, 120); border-radius: 12px; }}
+QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox {{ background: {_P_FILL};
+    border: 1px solid {_P_EDGE}; border-top-color: {_P_TOP};
+    border-radius: 10px; padding: 3px 8px; }}
+QLineEdit:hover, QSpinBox:hover, QDoubleSpinBox:hover, QComboBox:hover {{
+    background: {_P_HOVER}; }}
+QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {{
+    border-color: rgba(156, 255, 87, 150); border-top-color: rgba(200, 255, 160, 200); }}
+QComboBox QAbstractItemView {{ background: #0E1A18; border: 1px solid {_P_EDGE};
+    border-radius: 8px; }}
+QSlider::groove:horizontal {{ height: 6px; border-radius: 3px;
+    background: rgba(255, 255, 255, 22); border: 1px solid {_P_EDGE};
+    border-top-color: {_P_TOP}; }}
+QSlider::sub-page:horizontal {{ border-radius: 3px;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+    stop:0 rgba(156, 255, 87, 70), stop:1 rgba(156, 255, 87, 190)); }}
+QSlider::handle:horizontal {{ width: 14px; height: 14px; margin: -5px 0;
+    border-radius: 7px; border: 1px solid rgba(255, 255, 255, 170);
+    background: qradialgradient(cx:0.4, cy:0.35, radius:0.7, fx:0.4, fy:0.3,
+    stop:0 #EFFFE4, stop:0.5 {PHOSPHOR}, stop:1 #6FCC38); }}
+QSlider::handle:horizontal:hover {{ border-color: white; }}
+QGroupBox {{ background: rgba(255, 255, 255, 6); border: 1px solid {_P_EDGE};
+    border-top-color: rgba(255, 255, 255, 70); border-radius: 14px; }}
+QTreeWidget, QTableWidget, QListWidget {{ background: {_S_FIELD};
+    border: 1px solid {_P_EDGE}; border-top-color: rgba(255, 255, 255, 60);
+    border-radius: 12px; }}
+QCheckBox::indicator {{ border-radius: 4px; background: {_P_FILL};
+    border: 1px solid rgba(255, 255, 255, 80); }}
+QCheckBox::indicator:checked {{ background: {PHOSPHOR}; border-color: white; }}
+QProgressBar {{ background: rgba(255, 255, 255, 18); border: 1px solid {_P_EDGE};
+    border-radius: 4px; }}
+QProgressBar::chunk {{ background: {PHOSPHOR}; border-radius: 3px; }}
+QMenu {{ background: transparent; border: none; padding: 8px 4px; }}
+QMenu::item {{ border-radius: 8px; padding: 5px 22px 5px 14px; margin: 1px 4px; }}
+QMenu::item:selected {{ background: rgba(255, 255, 255, 30); color: {PHOSPHOR}; }}
+QMenu::separator {{ background: {_P_EDGE}; }}
+QDialog {{ background: transparent; border: none; }}
+QToolTip {{ background: #0E1A18; border: 1px solid rgba(255, 255, 255, 60);
+    border-radius: 8px; }}
+QLineEdit {{ placeholder-text-color: {GLASS_MUTED}; }}
+QLineEdit:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled,
+QComboBox:disabled, QCheckBox:disabled, QLabel:disabled {{ color: {GLASS_MUTED}; }}
+QGraphicsView {{ border: none; }}
+"""
+
+
+def stylesheet(name=None, glass_intensity=None):
     """The whole style sheet of a theme (the one in use if name is None):
-    QSS (plus GLASS_QSS for Glass) and the combo-box arrows. Needs a
-    running QApplication (the arrows are drawn with it).
+    QSS (plus GLASS_QSS for Glass, and STRONG_QSS at Strong intensity) and
+    the combo-box arrows. Needs a running QApplication (the arrows are
+    drawn with it).
 
     Keep the sub-control first in the selectors (::down-arrow:focus). Written
     the other way round (:focus::down-arrow) Qt draws a second arrow in the
     middle of the box."""
     a = arrow_files()
-    glass = GLASS_QSS if (name or _current) == "Glass" else ""
+    glass = ""
+    if (name or _current) == "Glass":
+        glass = GLASS_QSS
+        if (glass_intensity or _intensity) == "Strong":
+            glass += STRONG_QSS
     return QSS + glass + f"""
 QComboBox {{ padding-right: 20px; }}
 QComboBox::drop-down {{ subcontrol-origin: padding;
@@ -282,12 +404,17 @@ def setup_pyqtgraph():
                         antialias=True, imageAxisOrder="row-major")
 
 
-def use_theme(name, app=None):
-    """Make name the theme in use: style sheet, pyqtgraph defaults. Plots
-    that exist already are recoloured with restyle_plots()."""
-    global _current
+def use_theme(name, app=None, glass_intensity=None):
+    """Make name the theme in use (and, for Glass, the intensity): style
+    sheet, pyqtgraph defaults. Plots that exist already are recoloured with
+    restyle_plots()."""
+    global _current, _intensity
     if name not in THEMES:
         raise ValueError(f"no theme {name!r}; there are {THEMES}")
+    if glass_intensity is not None:
+        if glass_intensity not in INTENSITIES:
+            raise ValueError(f"no intensity {glass_intensity!r}")
+        _intensity = glass_intensity
     _current = name
     app = app or QtWidgets.QApplication.instance()
     if app is not None:

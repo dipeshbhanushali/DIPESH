@@ -36,3 +36,35 @@ def test_every_phosphor_page_is_pixel_identical_to_before(filled, tmp_path):
     differ = [n for n, img in shots(filled).items()
               if not same(img, n, tmp_path)]
     assert not differ, f"changed: {differ} (see {tmp_path})"
+
+
+def test_phosphor_is_the_same_after_every_glass_look(filled, monkeypatch):
+    """Phosphor, then every Glass look, then Phosphor again: the same
+    pixels. Both sets of pictures are taken once every page has been seen
+    (the first visit of some pages draws later than the picture is taken,
+    which the reference pictures show; that is page state, not the look)."""
+    win = filled
+    shots(win)                                   # every page seen once
+    before = shots(win)
+    clock = [0.0]
+    from dipesh.graphical_interface import glass
+    monkeypatch.setattr(glass.time, "monotonic", lambda: clock[0])
+    for level in ("Subtle", "Strong"):
+        win.set_glass_intensity(level, save=False)
+        win.set_theme("Glass", save=False)
+        # every page but learn: learn lines its sub-bar up under its tab
+        # with a fixed spacer, so once shown in a wider window it keeps the
+        # window that wide (as in 1.0). Glass is wider, so that would change
+        # the window size, not the look. learn in Glass: test_themes.py.
+        for k in range(len(win.pages) - 1):
+            win.show_page(k)
+        for _ in range(5):                       # let the background drift
+            clock[0] += 3.0
+            win.backdrop._tick()
+        win.grab()
+    win.set_theme("Phosphor", save=False)
+    after = shots(win)
+    differ = [n for n in before
+              if before[n].convertToFormat(QtGui.QImage.Format_RGB32)
+              != after[n].convertToFormat(QtGui.QImage.Format_RGB32)]
+    assert not differ, f"changed: {differ}"
