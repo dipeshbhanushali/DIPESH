@@ -18,4 +18,5 @@ from .loading import (IMAGE_EXTS, STILL_EXTS, VIDEO_EXTS, READ_EXTS,
 from .preprocessing import (to_float, remove_hot_pixels, masked_background,
                             prepare)
 from .image_luminosity import image_luminosity
-from .detection import candidates, detect, suppress
+from .detection import (box_sum, brightest_first, candidates, detect,
+                        find_spots, local_max, suppress)

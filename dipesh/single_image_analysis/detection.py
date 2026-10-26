@@ -12,6 +12,54 @@ from .params import DEFAULT_PARAMS, DetectionInfo, Spot
 from .preprocessing import prepare
 
 
+def box_sum(img, size):
+    """Sum of the size x size box around every pixel (at the frame's edge
+    the image is mirrored, OpenCV's default)."""
+    return cv2.filter2D(img, -1, np.ones((size, size), np.float32))
+
+
+def local_max(img, size):
+    """True where a pixel is the brightest of its size x size neighbourhood,
+    within one count (on the 0-255 scale; brighter values are clipped)."""
+    k = size if size % 2 else size + 1
+    img_u8 = np.clip(img, 0, 255).astype(np.uint8)
+    dil = cv2.dilate(img_u8, np.ones((k, k), np.uint8)).astype(np.float32)
+    return np.clip(img, 0, 255) >= dil - 1
+
+
+def brightest_first(xs, ys, values, min_dist):
+    """One peak per particle: the candidates in order of brightness, each one
+    removing the others closer than min_dist. -> indices of those kept, in
+    that order."""
+    kept = []
+    if len(xs):
+        order = np.argsort(values)[::-1]
+        sup = np.zeros(len(xs), bool)
+        for i in order:
+            if sup[i]:
+                continue
+            kept.append(int(i))
+            sup |= np.sqrt((xs - xs[i]) ** 2 + (ys - ys[i]) ** 2) < min_dist
+    return kept
+
+
+def find_spots(img, peak_thresh, box_thresh, min_dist, box=5, local=7,
+               spread_min=None):
+    """Spots in a background-subtracted image, one per particle: a local
+    maximum (local x local), brighter than peak_thresh, whose box x box sum
+    is above box_thresh (and, if spread_min is given, whose box sum / peak
+    is above it). -> [(x, y, peak, box_sum), ...], brightest first.
+    detect() uses the same pieces with box 5 and its own settings."""
+    sums = box_sum(img, box)
+    mask = local_max(img, local) & (img > peak_thresh) & (sums > box_thresh)
+    if spread_min is not None:
+        mask &= sums / (img + 1e-6) > spread_min
+    ys, xs = np.where(mask)
+    return [(int(xs[i]), int(ys[i]), float(img[ys[i], xs[i]]),
+             float(sums[ys[i], xs[i]]))
+            for i in brightest_first(xs, ys, img[ys, xs], min_dist)]
+
+
 def candidates(diff, sigma, params=DEFAULT_PARAMS):
     """The pixels that pass every cut, before one-per-particle suppression:
     a local maximum (within nms_size), above the threshold, with a 5x5 sum
@@ -20,15 +68,9 @@ def candidates(diff, sigma, params=DEFAULT_PARAMS):
     arrays (learn/crops.stages)."""
     thresh = (max(params.abs_thresh, params.n_sigma * sigma)
               if params.adaptive else params.abs_thresh)
-
-    sum5 = cv2.filter2D(diff, -1, np.ones((5, 5), np.float32))
+    sum5 = box_sum(diff, 5)
     spread = sum5 / (diff + 1e-6)
-
-    k = params.nms_size if params.nms_size % 2 else params.nms_size + 1
-    diff_u8 = np.clip(diff, 0, 255).astype(np.uint8)
-    dil = cv2.dilate(diff_u8, np.ones((k, k), np.uint8)).astype(np.float32)
-    diff_c = np.clip(diff, 0, 255)
-    mask = ((diff_c >= dil - 1) & (diff > thresh) &
+    mask = (local_max(diff, params.nms_size) & (diff > thresh) &
             (sum5 > params.sum_thresh) & (spread > params.spread_min))
     return mask, sum5, spread, thresh
 
@@ -37,17 +79,9 @@ def suppress(diff, sum5, mask, params=DEFAULT_PARAMS):
     """One spot per particle: candidates brightest first, each one removing
     the others closer than min_dist. -> list[Spot]"""
     ys, xs = np.where(mask)
-    spots = []
-    if len(xs):
-        order = np.argsort(diff[ys, xs])[::-1]
-        sup = np.zeros(len(xs), bool)
-        for i in order:
-            if sup[i]:
-                continue
-            cx, cy = int(xs[i]), int(ys[i])
-            spots.append(Spot(cx, cy, float(diff[cy, cx]), float(sum5[cy, cx])))
-            sup |= np.sqrt((xs - xs[i]) ** 2 + (ys - ys[i]) ** 2) < params.min_dist
-    return spots
+    return [Spot(int(xs[i]), int(ys[i]), float(diff[ys[i], xs[i]]),
+                 float(sum5[ys[i], xs[i]]))
+            for i in brightest_first(xs, ys, diff[ys, xs], params.min_dist)]
 
 
 def detect(img_float, params=DEFAULT_PARAMS, photometry=False):
