@@ -46,6 +46,12 @@ class IonResult:
     totals: dict                    # method name -> aggregate.Total
     methods: dict = field(default_factory=dict)   # name -> MethodInfo
     ions: dict = field(default_factory=dict)      # frame -> single ions
+    light: dict = field(default_factory=dict)     # method -> {frame: light of
+                                                  # each single ion, background
+                                                  # per pixel taken off}
+    frame_data: dict = field(default_factory=dict, repr=False)
+    # what the frames gave (light of every ion, disc sums ...): enough to
+    # count again with other frames left out, without reading the video
 
     @property
     def excluded(self):
@@ -153,7 +159,7 @@ def analyse(dataset, params, progress=None, cancelled=None):
                          if m.kind == "threshold_sum"})
 
     rows, frame_data, ions_by_frame = [], {}, {}
-    for k, it in enumerate(items):
+    for k, it in enumerate(items):  # pass 1: read every frame once
         check()
         f = frame_number(it)
         diff = bgmod.subtract(read(it), bg)
@@ -172,8 +178,23 @@ def analyse(dataset, params, progress=None, cancelled=None):
         if progress:
             progress(k + 1, len(items))
 
+    result = IonResult(dataset, params, bg, rows, {}, {}, ions_by_frame, {},
+                       frame_data)
+    _count(result)
+    return result
+
+
+def _count(result):
+    """Pass 2, from the numbers the frames gave: background per pixel, SIS,
+    baseline and the pile-up estimate of every method, and the totals."""
+    params, rows = result.params, result.rows
+    frame_data, ions_by_frame = result.frame_data, result.ions
+    disc = params.region.pileup
+    methods = list(params.methods) if disc else []
     singles = {r.frame: r.singles for r in rows}
-    info = {}
+    info, light_of = {}, {}
+    for r in rows:
+        r.methods = {}
     for m in methods:
         c = m.calibration
         key = (c.measure, c.box, c.radius)
@@ -182,10 +203,11 @@ def analyse(dataset, params, progress=None, cancelled=None):
             c, {f: frame_data[f]["quiet"].get(cal.keep_out_radius(c))
                 for f in pool},
             {f: singles[f] for f in pool})
-        sis_frame = {}
+        sis_frame, light_by_frame = {}, {}
         for r in rows:
             light, pixels = frame_data[r.frame]["light"][key]
-            sis_frame[r.frame] = cal.frame_sis(light - bgpp * pixels,
+            light_by_frame[r.frame] = light - bgpp * pixels
+            sis_frame[r.frame] = cal.frame_sis(light_by_frame[r.frame],
                                                ions_by_frame[r.frame], c)
         dataset_sis = None
         if c.scope == "frames":
@@ -193,7 +215,8 @@ def analyse(dataset, params, progress=None, cancelled=None):
                                          {f: singles[f] for f in pool}, c)
         base = pileup.baseline(m, [frame_data[f]["raw"] for f in pool]) \
             if m.kind == "baseline_sum" else 0.0
-        info[m.name] = aggregate_info = MethodInfo(bgpp, dataset_sis, base)
+        info[m.name] = mi = MethodInfo(bgpp, dataset_sis, base)
+        light_of[m.name] = light_by_frame
         for r in rows:
             d = frame_data[r.frame]
             own, n_used = sis_frame[r.frame]
@@ -207,14 +230,31 @@ def analyse(dataset, params, progress=None, cancelled=None):
             else:
                 sis, skipped = None, c.fallback == "skip"
             s = pileup.signal(m, d["raw"], d["pixels"], d["above"],
-                              aggregate_info.baseline, bgpp)
+                              mi.baseline, bgpp)
             inner = pileup.count(m, s, sis)
             r.methods[m.name] = aggregate.MethodFrame(
                 sis, n_used, s, inner, r.singles + inner, skipped)
 
     names = [m.name for m in methods]
-    totals = aggregate.totals(rows, names, params.aggregate)
-    return IonResult(dataset, params, bg, rows, totals, info, ions_by_frame)
+    result.totals = aggregate.totals(rows, names, params.aggregate)
+    result.methods, result.light = info, light_of
+    return result
+
+
+def recount(result, exclude):
+    """The same analysis with other frames left out of the totals (and,
+    where the settings say so, out of the calibration and baseline):
+    counted again from the numbers the frames gave, without reading the
+    video. -> a new IonResult; its dataset has the new exclude."""
+    import copy
+    import dataclasses
+    new = copy.copy(result)
+    new.dataset = dataclasses.replace(result.dataset, exclude=tuple(
+        sorted(set(exclude))))
+    left_out = set(new.dataset.exclude)
+    new.rows = [aggregate.FrameRow(r.frame, r.singles, r.frame in left_out,
+                                   r.disc_sum) for r in result.rows]
+    return _count(new)
 
 
 def frame_view(dataset, params, item, background):

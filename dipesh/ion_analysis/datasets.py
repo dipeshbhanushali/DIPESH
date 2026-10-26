@@ -106,6 +106,8 @@ class IonDataset:
     series       datasets that belong together (a storage-time scan)
     background_source  a separate video or folder for background mode
                  "video", with background_frames like frames
+    errors       the dataset's error table (errors.ErrorTable; empty: no
+                 error)
     """
     name: str
     path: str
@@ -116,6 +118,12 @@ class IonDataset:
     background_source: str = ""
     background_frames: tuple | None = None
     notes: str = ""
+    errors: object = None
+
+    def __post_init__(self):
+        if self.errors is None:
+            from .errors import ErrorTable
+            self.errors = ErrorTable()
 
     def items(self):
         """The frames used, as single_image_analysis Items (a video frame,
@@ -129,6 +137,7 @@ class IonDataset:
     def to_dict(self):
         d = asdict(self)
         d["exclude"] = list(self.exclude)
+        d["errors"] = self.errors.to_dict()
         return d
 
     @classmethod
@@ -138,6 +147,8 @@ class IonDataset:
             if d.get(k) is not None:
                 d[k] = tuple(d[k])
         d["exclude"] = tuple(d.get("exclude", ()))
+        from .errors import ErrorTable
+        d["errors"] = ErrorTable.from_dict(d["errors"]) if d.get("errors")             else None
         return cls(**d)
 
 

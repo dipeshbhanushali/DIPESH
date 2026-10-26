@@ -256,3 +256,18 @@ def test_the_background_is_kept_until_its_frames_change(tmp_path):
     os.utime(os.path.join(folder, "frame_00000.png"), (later, later))
     assert analyse(ds, params()).background is not first
     run.forget_backgrounds()
+
+
+def test_recount_with_other_frames_left_out_equals_a_new_analysis(video):
+    from dipesh.ion_analysis import recount
+    ms = (PileupMethod(name="t", calibration=BOX),
+          PileupMethod(name="b", kind="baseline_sum", baseline_percentile=50,
+                       calibration=dataclasses.replace(BOX, scope="frames")))
+    first = analyse(IonDataset("r", video), params(*ms))
+    again = recount(first, (1, 3))
+    fresh = analyse(IonDataset("r", video, exclude=(1, 3)), params(*ms))
+    assert again.dataset.exclude == (1, 3) and first.dataset.exclude == ()
+    assert again.totals == fresh.totals
+    assert [r.methods for r in again.rows] == [r.methods for r in fresh.rows]
+    assert again.methods == fresh.methods
+    assert first.totals != again.totals              # the first is unchanged

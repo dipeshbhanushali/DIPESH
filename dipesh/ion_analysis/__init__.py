@@ -23,5 +23,8 @@ from .params import (AggregateParams, BackgroundParams, CalibrationParams,
                      IonParams, PileupMethod, RegionParams, SinglesParams)
 from .datasets import (IonDataset, find_datasets, format_frames, load,
                        parse_frames, parse_storage_time, read_frame, save)
-from .run import Cancelled, IonResult, analyse, frame_view
+from .run import Cancelled, IonResult, analyse, frame_view, recount
 from .presets import LEGACY, preset
+from .errors import ErrorComponent, ErrorTable, ErrorValues, evaluate
+from .decay import DecayFit, fit_decay, two_point_tau
+from . import report
