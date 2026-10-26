@@ -13,8 +13,8 @@ from .params import (DetectionParams, DEFAULT_PARAMS, Spot, DetectionInfo,
 from .loading import (IMAGE_EXTS, STILL_EXTS, VIDEO_EXTS, READ_EXTS,
                       RUN_PATTERN, Item, Items, Skipped, scan, scan_tree,
                       find_run_folders, find_tiff, find_image, page_count,
-                      frame_count, frame_range, to_grey, load_image, load_item,
-                      close_videos, parse_batman)
+                      frame_count, frame_range, to_grey, read_raw, load_image,
+                      load_item, close_videos, parse_batman)
 from .preprocessing import (to_float, remove_hot_pixels, masked_background,
                             prepare)
 from .image_luminosity import image_luminosity

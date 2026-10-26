@@ -54,6 +54,7 @@ PACKAGES = [
     ("clustering_recognition", "Clustering and recognition"),
     ("results", "Results"),
     ("pickup", "Pickup"),
+    ("ion_analysis", "Ion analysis"),
     ("graphical_interface", "Graphical interface"),
     ("", "Whole program"),
 ]

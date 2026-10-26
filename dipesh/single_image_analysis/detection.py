@@ -27,13 +27,16 @@ def local_max(img, size):
     return np.clip(img, 0, 255) >= dil - 1
 
 
-def brightest_first(xs, ys, values, min_dist):
+def brightest_first(xs, ys, values, min_dist, order=None):
     """One peak per particle: the candidates in order of brightness, each one
-    removing the others closer than min_dist. -> indices of those kept, in
-    that order."""
+    removing the others closer than min_dist. order(values) -> indices,
+    brightest first, decides the order of equally bright candidates; None
+    is NumPy's argsort, reversed, as detect() has always used.
+    -> indices of those kept, in that order."""
     kept = []
     if len(xs):
-        order = np.argsort(values)[::-1]
+        order = (np.argsort(values)[::-1] if order is None
+                 else order(values))
         sup = np.zeros(len(xs), bool)
         for i in order:
             if sup[i]:
@@ -44,11 +47,12 @@ def brightest_first(xs, ys, values, min_dist):
 
 
 def find_spots(img, peak_thresh, box_thresh, min_dist, box=5, local=7,
-               spread_min=None):
+               spread_min=None, order=None):
     """Spots in a background-subtracted image, one per particle: a local
     maximum (local x local), brighter than peak_thresh, whose box x box sum
     is above box_thresh (and, if spread_min is given, whose box sum / peak
-    is above it). -> [(x, y, peak, box_sum), ...], brightest first.
+    is above it). order: see brightest_first.
+    -> [(x, y, peak, box_sum), ...], brightest first.
     detect() uses the same pieces with box 5 and its own settings."""
     sums = box_sum(img, box)
     mask = local_max(img, local) & (img > peak_thresh) & (sums > box_thresh)
@@ -57,7 +61,7 @@ def find_spots(img, peak_thresh, box_thresh, min_dist, box=5, local=7,
     ys, xs = np.where(mask)
     return [(int(xs[i]), int(ys[i]), float(img[ys[i], xs[i]]),
              float(sums[ys[i], xs[i]]))
-            for i in brightest_first(xs, ys, img[ys, xs], min_dist)]
+            for i in brightest_first(xs, ys, img[ys, xs], min_dist, order)]
 
 
 def candidates(diff, sigma, params=DEFAULT_PARAMS):

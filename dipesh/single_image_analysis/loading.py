@@ -390,6 +390,9 @@ def scan_tree(path, frames=None):
 _videos = {}                                       # path -> [capture, next frame]
 _videos_lock = threading.Lock()
 _MAX_OPEN_VIDEOS = 2
+# a few frames ahead are decoded and passed over rather than sought: a seek
+# in a compressed video decodes again from the last key frame
+_SKIP_AHEAD = 16
 
 
 def _video_frame(path, k):
@@ -405,7 +408,10 @@ def _video_frame(path, k):
                 return None
             entry = [cap, 0]
         cap = entry[0]
-        if entry[1] != k:
+        if entry[1] >= 0 and 0 < k - entry[1] <= _SKIP_AHEAD:
+            for _ in range(k - entry[1]):
+                cap.grab()
+        elif entry[1] != k:
             cap.set(cv2.CAP_PROP_POS_FRAMES, k)
         ok, img = cap.read()
         entry[1] = k + 1 if ok else -1
@@ -459,16 +465,21 @@ def to_grey(img):
     return img
 
 
+def read_raw(path, frame=None):
+    """The pixels as the file holds them (colour channels, alpha and bit
+    depth as stored), or None. frame as in load_image."""
+    if path.lower().endswith(VIDEO_EXTS):
+        return _video_frame(path, frame or 0)
+    if frame:
+        return _tiff_page(path, frame)
+    return cv2.imread(path, cv2.IMREAD_UNCHANGED)
+
+
 def load_image(path, frame=None):
     """Read an image as float32 at its original bit depth. None on failure.
     frame: the page of a multi-page TIFF or the frame of a video, from 0
     (None: a still image's first page, a video's first frame)."""
-    if path.lower().endswith(VIDEO_EXTS):
-        img = _video_frame(path, frame or 0)
-    elif frame:
-        img = _tiff_page(path, frame)
-    else:
-        img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
+    img = read_raw(path, frame)
     if img is None:
         return None
     return to_grey(img)
