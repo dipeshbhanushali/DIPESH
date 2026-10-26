@@ -7,6 +7,9 @@ build/lib/
 build/bdist.*/
 dist/
 .buildenv/
+# PyInstaller's work folder (next to the spec) and the Inno Setup output
+build/dipesh/
+installer/
 output/
 .pytest_cache/
 # the report's intermediate files, except its figures

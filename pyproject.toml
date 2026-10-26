@@ -39,6 +39,11 @@ dipesh = "dipesh.graphical_interface.app:main"
 [tool.setuptools.packages.find]
 include = ["dipesh*"]
 
+# files the app reads at runtime that are not Python (also in
+# build/dipesh.spec; tests/test_packaging.py checks both)
+[tool.setuptools.package-data]
+"dipesh.graphical_interface.learn" = ["texts/*.md"]
+
 [project.optional-dependencies]
 dev = ["pytest>=7", "pytest-qt>=4.2"]
 

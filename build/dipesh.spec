@@ -20,7 +20,12 @@ a = Analysis(
     ['../dipesh/__main__.py'],
     pathex=['..'],
     binaries=[],
-    datas=[],
+    # every file the app reads at runtime that is not Python (the words of
+    # the learn lessons); tests/test_packaging.py checks nothing is missing
+    datas=[
+        ('../dipesh/graphical_interface/learn/texts/*.md',
+         'dipesh/graphical_interface/learn/texts'),
+    ],
     hiddenimports=[
         'dipesh.graphical_interface.app',
         'dipesh.graphical_interface.main_window',
