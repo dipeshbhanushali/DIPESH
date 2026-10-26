@@ -141,6 +141,41 @@ class ExportWorker(QtCore.QObject):
             self.finished.emit(False, f"export failed: {e}")
 
 
+class IonWorker(QtCore.QObject):
+    """The ion analysis of a list of datasets, one after the other (each
+    reads its video frame by frame)."""
+    progress = QtCore.Signal(str, int, int)      # dataset, frames done, of
+    one = QtCore.Signal(object)                  # ion_analysis.IonResult
+    failed = QtCore.Signal(str, str)             # dataset, message
+    finished = QtCore.Signal(bool)               # True if cancelled
+
+    def __init__(self, datasets, params):
+        super().__init__()
+        self.datasets, self.params = list(datasets), params
+        self.cancelled = False
+
+    def cancel(self):
+        self.cancelled = True
+
+    @QtCore.Slot()
+    def run(self):
+        from ..ion_analysis import Cancelled, analyse
+        for ds in self.datasets:
+            if self.cancelled:
+                break
+            try:
+                r = analyse(ds, self.params,
+                            progress=lambda d, n, name=ds.name:
+                            self.progress.emit(name, d, n),
+                            cancelled=lambda: self.cancelled)
+                self.one.emit(r)
+            except Cancelled:
+                break
+            except Exception as e:                # noqa: BLE001 — shown
+                self.failed.emit(ds.name, str(e))
+        self.finished.emit(self.cancelled)
+
+
 class _PickupSignals(QtCore.QObject):
     done = QtCore.Signal(int, object, object)
 

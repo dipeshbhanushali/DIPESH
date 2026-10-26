@@ -14,23 +14,45 @@ CAPTIONS = {
     "pca": {"axes"},
     "plots": {"x axis", "y axis", "error shown", "model"},
     "pickup": {"show", "channel"},
+    "ions": {"start from", "colour to grey", "made from", "kind", "equal peaks",
+             "add up", "baseline", "rounding", "measure", "background per px",
+             "ions used", "statistic", "one SIS per", "over frames",
+             "no SIS: use", "method", "count of", "combine", "series",
+             "first", "second", "error"},
     "learn": {"axes", "feature", "lower dataset", "higher dataset", "spots from"},
 }
 
 
+def in_a_table(widget):
+    """A combo box in a table cell: the column header says what it selects."""
+    w = widget.parentWidget()
+    while w is not None:
+        if isinstance(w, QtWidgets.QAbstractItemView):
+            return True
+        w = w.parentWidget()
+    return False
+
+
 def page_combos(page):
-    """The page's own combo boxes (pyqtgraph's context menus have their own)."""
+    """The page's own combo boxes (pyqtgraph's context menus have their own;
+    cells of tables have their column header)."""
     return [c for c in page.findChildren(QtWidgets.QComboBox)
-            if hasattr(c, "caption") or c.parent() is not None
-            and "pyqtgraph" not in type(c.parent()).__module__]
+            if (hasattr(c, "caption") or c.parent() is not None
+                and "pyqtgraph" not in type(c.parent()).__module__)
+            and not in_a_table(c)]
 
 
 def views(page):
-    """The combo boxes on show, view by view: learn shows one lesson at a time."""
-    lessons = getattr(page, "lessons", [None])
-    for k in range(len(lessons)):
-        if lessons[k] is not None:
+    """The combo boxes on show, view by view: learn shows one lesson at a
+    time, ions one tab of views at a time."""
+    lessons = getattr(page, "lessons", None)
+    tabs = getattr(page, "tabs", None)
+    n = len(lessons) if lessons else tabs.count() if tabs else 1
+    for k in range(n):
+        if lessons:
             page.show_lesson(k)
+        elif tabs:
+            tabs.setCurrentIndex(k)
         QtWidgets.QApplication.processEvents()
         yield [c for c in page_combos(page) if c.isVisibleTo(page)]
 

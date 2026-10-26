@@ -329,7 +329,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _keys(self):
         QtWidgets.QMessageBox.information(self, "Keyboard shortcuts",
-            "Ctrl+1 … Ctrl+7    switch analysis\n"
+            "Ctrl+1 … Ctrl+8    switch analysis\n"
             "PgUp / PgDn        previous / next image\n"
             "↑ / ↓              move in the run list\n"
             "Ctrl+O             add a folder\n"
@@ -467,6 +467,9 @@ class MainWindow(QtWidgets.QMainWindow):
         if self._thread is not None:
             self._thread.quit()
             self._thread.wait(5000)
+        for page in self.pages:                   # pages with their own work
+            if hasattr(page, "stop"):
+                page.stop()
         self.backdrop.animate(False)              # no drift, no app-wide
         self.popup_glass.set_on(False)            # event watching when closed
         e.accept()

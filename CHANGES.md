@@ -2,6 +2,17 @@
 
 ## 2.0.0 (in development)
 
+- Ion analysis (`dipesh.ion_analysis`, the *ions* page): MCP release videos,
+  single ions counted one by one in a region, a pile-up disc estimated from
+  its light with a single-ion calibration (several methods side by side),
+  background from the darkest / random / all frames or a separate video,
+  frames left out of totals, storage times read from file names (only with a
+  unit), an error table per dataset, the decay fit with storage time and
+  two-point tau, CSV/JSON export. Every value is a setting. Named "legacy"
+  presets repeat earlier analyses; tests show they give exactly the earlier
+  numbers on the real videos.
+- `find_spots()`, the spot finder, is shared by `detect()` (unchanged) and
+  the ion analysis.
 - Any image, any folder. JPG/JPEG and BMP are read, as well as TIFF and PNG;
   colour images become grey (BT.601 weights, alpha dropped). Each page of a
   multi-page TIFF and each frame of an AVI or MP4 video is one item; video

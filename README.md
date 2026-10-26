@@ -182,6 +182,79 @@ baseline to count as found.
 
 ---
 
+## Ions
+
+The *ions* page (and `dipesh.ion_analysis` for scripts) counts ions in MCP
+release videos: a video, or a folder of frames, per dataset. Every number
+below is a setting, saved with the dataset as JSON; *start from* offers the
+defaults and named presets.
+
+**Datasets.** *Add videos…* or *Add folder…* (every video and folder of
+frames below it). The storage time is read from the name when it is written
+with a unit (`storage_time_10min`, `45 mins`, `20s`, `1 min 16 sec`); a
+number without a unit is never taken for a time. Edit it, the series, the
+frames used (`first-last`) and the frames *left out* (`0-1, 5`) in the table.
+Left-out frames stay in every table, marked, and are left out of every total;
+ticking *leave this frame out* in the viewer counts again at once, without
+reading the video.
+
+**Background.** The per-pixel median of a set of frames, taken off every
+frame and clipped at 0: the *darkest* n frames (least light), n frames at
+*random* (with a seed), *all* frames, or every frame of a separate background
+*video*. Colour frames become grey exactly (BT.601) or rounded to whole counts
+(as most video tools do).
+
+**Region.** Single ions are counted on the whole frame, in a rectangle, in a
+circle, or in a *ring* around a pile-up disc where ions overlap. Drag the
+circles in the viewer.
+
+**Single ions.** A local maximum (`local` px) above a peak threshold, whose
+box sum (`box` px, 5 or 7) is above a threshold, at least a minimum distance
+from a brighter one; optionally a spread cut against hot pixels. Equally
+bright candidates are taken in reading order (row by row).
+
+**Calibration (single-ion signal, SIS).** The light of a single ion, measured
+in a box or a round aperture, optionally minus a background per pixel (fixed,
+or measured away from ions in the sparsest frames); the ions used are all,
+those above the frame's median, or isolated ones; their mean or median; one
+SIS per frame or one for the dataset (over frames with enough ions). A frame
+without single ions uses no SIS (no estimate), a fixed value, or is skipped.
+
+**Pile-up disc.** N = S / SIS, with S the disc's light above a pixel
+threshold, the disc's light minus a baseline (a percentile of the disc over
+the frames, or a fixed value), or the disc's light minus the background per
+pixel (with a minimum below which there is no blob). Rounded to whole ions or
+not. Several methods run side by side, each with its own calibration.
+
+**Totals.** Single ions + disc ions over the frames used: every frame, or only
+frames whose count is above a threshold.
+
+**Errors.** Each dataset has an error table, empty until you add components:
+Poisson sqrt(N); the spread between counting methods (standard deviation or
+half range); a fixed fraction of N; a value typed in; per-frame errors summed
+in quadrature. Each is statistical or systematic; they combine in quadrature
+or linearly.
+
+**Decay.** N0 exp(-t / tau) fitted to any datasets or series, weighted by
+their errors (absolute), with tau, N0, their covariance and the reduced
+chi-squared; or tau from two datasets with first-order error propagation.
+*Export* writes the per-frame tables, the totals with their errors, every
+error component and a JSON of everything.
+
+```python
+from dipesh.ion_analysis import IonDataset, analyse, preset
+from dipesh.ion_analysis.params import RegionParams, PileupMethod
+
+params = preset("default").with_(
+    region=RegionParams("ring", cx=640, cy=512, r=370,
+                        inner_cx=640, inner_cy=512, inner_r=65),
+    methods=(PileupMethod(name="disc"),))
+r = analyse(IonDataset("release", r"C:\DATA\release.avi", exclude=(0,)), params)
+print(r.totals["disc"])
+```
+
+---
+
 ## For scripts
 
 ```python
@@ -261,9 +334,13 @@ dipesh/
     trends.py                averaging repeats, fits
   pickup/                    PicoScope signals
     config.py  traces.py  rf_filter.py  pulse.py  measure.py
+  ion_analysis/              ion release videos (the ions page), no Qt
+    params.py  datasets.py  background.py  geometry.py  singles.py
+    calibration.py  pileup.py  aggregate.py  run.py  errors.py  decay.py
+    report.py  presets.py  tie_order.py
   graphical_interface/       the desktop app; computes nothing itself
     app.py  main_window.py  theme.py  glass.py  session.py  workers.py  widgets.py
-    pages/                   image, spots, histogram, pca, plots, pickup
+    pages/                   image, spots, histogram, pca, plots, pickup, ions
     learn/                   the learn page: lessons that draw the analysis's
                              own numbers; texts/*.md are its words
 build/                       dipesh.spec (PyInstaller), installer.iss (Inno Setup),
