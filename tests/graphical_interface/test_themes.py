@@ -59,7 +59,7 @@ def test_phosphor_is_the_default_and_view_offers_every_choice(window):
     texts = [a.text() for a in window.view_menu.actions()
              if not a.isSeparator()]
     assert texts == ["Phosphor theme", "Glass theme", "Glass intensity",
-                     "Animate background"]
+                     "Animate background", "Settings panel"]
     assert [a.text() for a in window.intensity_menu.actions()] == \
         ["Subtle", "Strong"]
     assert window.intensity_actions["Strong"].isChecked()   # Glass default

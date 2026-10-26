@@ -11,6 +11,7 @@ from PySide6 import QtCore, QtWidgets
 from ...ion_analysis import (IonDataset, find_datasets, format_frames, load,
                              parse_frames, recount, save)
 from ...single_image_analysis import READ_EXTS, VIDEO_EXTS
+from ..widgets import SidePanel
 from ..workers import IonWorker
 from .base import Page
 from .ions_settings import SettingsPanel
@@ -102,8 +103,8 @@ class IonsPage(Page):
 
         # settings
         self.settings = SettingsPanel()
-        self.settings.setMinimumWidth(220)
-        split.addWidget(self.settings)
+        self.side = SidePanel(self.settings, scroll=False)
+        split.addWidget(self.side)
         split.setStretchFactor(1, 1)
         split.setCollapsible(1, False)
         split.setSizes([300, 900, 310])

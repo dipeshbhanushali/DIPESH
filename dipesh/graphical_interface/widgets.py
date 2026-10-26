@@ -254,19 +254,70 @@ class DetectionPanel(QtWidgets.QWidget):
         self.facts["lum"].setText(f"{i.pbar_count_lum:.1f}")
 
 
+class SidePanel(QtWidgets.QWidget):
+    """A settings column at the right: it scrolls when the window is short,
+    and folds away to a thin strip with its arrow button (View > Settings
+    panel does the same). content: the column; scroll=False when it scrolls
+    by itself."""
+    toggled = QtCore.Signal(bool)
+
+    def __init__(self, content, scroll=True):
+        super().__init__()
+        self.content = content
+        lay = QtWidgets.QHBoxLayout(self)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(0)
+        self.button = QtWidgets.QToolButton()
+        self.button.setObjectName("fold")
+        self.button.setAutoRaise(True)
+        self.button.setFixedWidth(16)
+        self.button.setCursor(QtCore.Qt.PointingHandCursor)
+        lay.addWidget(self.button, 0, QtCore.Qt.AlignTop)
+        if scroll:
+            self.area = QtWidgets.QScrollArea()
+            self.area.setWidgetResizable(True)
+            self.area.setFrameShape(QtWidgets.QFrame.NoFrame)
+            self.area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+            self.area.setWidget(content)
+            self.area.setFixedWidth(content.minimumSizeHint().width()
+                                    + self.area.verticalScrollBar()
+                                    .sizeHint().width() + 2)
+        else:
+            self.area = content
+        lay.addWidget(self.area)
+        self.is_open = True
+        self.button.clicked.connect(lambda: self.set_open(not self.is_open))
+        self.set_open(True, quiet=True)
+
+    def set_open(self, on, quiet=False):
+        self.is_open = bool(on)
+        self.area.setVisible(self.is_open)
+        # folded, only the strip: a splitter gives the rest to the picture
+        self.setMaximumWidth(16777215 if self.is_open
+                             else self.button.width())
+        self.button.setArrowType(QtCore.Qt.RightArrow if self.is_open
+                                 else QtCore.Qt.LeftArrow)
+        self.button.setToolTip("Hide the settings (View > Settings panel)"
+                               if self.is_open else "Show the settings")
+        if not quiet:
+            self.toggled.emit(self.is_open)
+
+
 class Sidebar(QtWidgets.QWidget):
     """Datasets and their runs. Drop folders or images here to add them."""
 
     def __init__(self, session):
         super().__init__()
         self.s = session
-        self.setMinimumWidth(250)
+        self.setMinimumWidth(160)
         self.setAcceptDrops(True)
         col = QtWidgets.QVBoxLayout(self)
         col.setContentsMargins(8, 10, 4, 8)
         col.setSpacing(6)
 
-        row = QtWidgets.QHBoxLayout()
+        # side by side, one above the other when the list is made narrow
+        row = self.buttons = QtWidgets.QBoxLayout(
+            QtWidgets.QBoxLayout.LeftToRight)
         self.add_folder = QtWidgets.QPushButton("Add folder…")
         self.add_folder.setToolTip("A folder of pbar_run_XXXXXX folders, one "
                                    "run folder, or a folder of images or "
@@ -319,6 +370,16 @@ class Sidebar(QtWidgets.QWidget):
         session.resultsChanged.connect(self.update_counts)
         session.paramsChanged.connect(self.update_counts)
         self.rebuild()
+
+    def resizeEvent(self, e):
+        super().resizeEvent(e)
+        m = self.layout().contentsMargins()
+        need = (self.add_folder.sizeHint().width()
+                + self.add_images.sizeHint().width()
+                + self.buttons.spacing() + m.left() + m.right())
+        self.buttons.setDirection(QtWidgets.QBoxLayout.LeftToRight
+                                  if self.width() >= need
+                                  else QtWidgets.QBoxLayout.TopToBottom)
 
     # adding
     def pick_folder(self):

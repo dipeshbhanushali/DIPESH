@@ -26,8 +26,23 @@ from .glass import (Backdrop, Frost, PopupGlass, plot_frames, reduced_motion,
 from .theme import (APP_NAME, INTENSITIES, PHOSPHOR, THEMES, TUBE, current,
                     glow, intensity, muted, restyle_plots, set_intensity,
                     use_theme)
-from .widgets import Console, DetectionPanel, ExportDialog, Sidebar
+from .widgets import Console, DetectionPanel, ExportDialog, SidePanel, Sidebar
 from .workers import ExportWorker, LiveDetector, RunAllWorker
+
+
+class PageStack(QtWidgets.QStackedWidget):
+    """The pages, one on show. Its minimum size is that of the page on show,
+    not of the largest page (as a plain stacked widget has), so a page
+    with wide controls does not make the window wide for every page."""
+
+    def __init__(self):
+        super().__init__()
+        self.layout().setSizeConstraint(QtWidgets.QLayout.SetNoConstraint)
+        self.currentChanged.connect(lambda _: self.updateGeometry())
+
+    def minimumSizeHint(self):
+        page = self.currentWidget()
+        return page.minimumSizeHint() if page is not None             else super().minimumSizeHint()
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -68,7 +83,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.pages = make_pages(self.s)
         for page in self.pages:
             page.navigate = self.navigate
-        self.stack = QtWidgets.QStackedWidget()
+        self.stack = PageStack()
         self.nav = QtWidgets.QButtonGroup(self)
         self.nav.setExclusive(True)
         for k, page in enumerate(self.pages):
@@ -107,12 +122,13 @@ class MainWindow(QtWidgets.QMainWindow):
         # body
         self.sidebar = Sidebar(self.s)
         self.detection = DetectionPanel(self.s)
+        self.right = SidePanel(self.detection)
         self.console = Console(self.s)
 
         centre = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
         centre.addWidget(self.sidebar)
         centre.addWidget(self.stack)
-        centre.addWidget(self.detection)
+        centre.addWidget(self.right)
         centre.setStretchFactor(1, 1)
         centre.setSizes([270, 900, 330])
         centre.setCollapsible(1, False)
@@ -132,7 +148,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(root)
         # the panels that turn to frosted glass in the Glass theme
         self.frost = Frost(root, [bar, self.sidebar, self.stack,
-                                  self.detection, self.console])
+                                  self.right, self.console])
         self.frost.framed.append(plot_frames(self.stack))
         self.frost.extras.append(self._tab_glow)
         self.popup_glass = PopupGlass(root)       # menus and dialogs
@@ -148,6 +164,13 @@ class MainWindow(QtWidgets.QMainWindow):
             self.glass_intensity = "Strong"
         self.animate_on = st.value("animate_background", True, type=bool)
         self.set_theme(str(st.value("theme", "Phosphor")), save=False)
+        # the settings column at the right: open, or folded to a strip
+        self.right.toggled.connect(self.set_settings_panel)
+        for page in self.pages:
+            if hasattr(page, "side"):
+                page.side.toggled.connect(self.set_settings_panel)
+        self.set_settings_panel(st.value("settings_panel", True, type=bool),
+                                save=False)
         self.s.paramsChanged.connect(self._update_run_button)
         self.s.resultsChanged.connect(self._update_run_button)
         self.s.datasetsChanged.connect(self._update_run_button)
@@ -163,7 +186,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.bar.update()                         # the tab glow moves
         self.stack.setCurrentIndex(k)
         page = self.pages[k]
-        self.detection.setVisible(page.uses_detection)
+        self.right.setVisible(page.uses_detection)
         page.shown()
 
     def navigate(self, title, spot=None):
@@ -235,6 +258,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.animate_action = action(v, "Animate background",
                                      lambda on: self.set_animation(on))
         self.animate_action.setCheckable(True)
+        self.panel_action = action(v, "Settings panel",
+                                   lambda on: self.set_settings_panel(on))
+        self.panel_action.setCheckable(True)
         self.view_btn.setMenu(v)
         h = self.help_menu = QtWidgets.QMenu(self)
         action(h, "Keyboard shortcuts", self._keys)
@@ -260,6 +286,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self._look(current(), level)
         if save:
             QtCore.QSettings().setValue("glass_intensity", level)
+
+    def set_settings_panel(self, on, save=True):
+        """Show the settings column at the right (image, spots, ions), or
+        fold it to a thin strip to give the picture the room."""
+        on = bool(on)
+        self.panel_action.setChecked(on)
+        for panel in [self.right] + [p.side for p in self.pages
+                                     if hasattr(p, "side")]:
+            panel.blockSignals(True)
+            panel.set_open(on)
+            panel.blockSignals(False)
+        if save:
+            QtCore.QSettings().setValue("settings_panel", on)
 
     def set_animation(self, on, save=True):
         """Let the Strong background drift (never when the system asks for

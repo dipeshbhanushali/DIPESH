@@ -26,12 +26,19 @@ def qcolor(hex_, alpha=255):
 
 
 def side_column(width=290):
+    """A page's column of controls at the right, width px wide; it scrolls
+    when the window is too short for it. -> (column, its layout)"""
     w = QtWidgets.QWidget()
-    w.setFixedWidth(width)
     lay = QtWidgets.QVBoxLayout(w)
     lay.setContentsMargins(10, 10, 10, 10)
     lay.setSpacing(8)
-    return w, lay
+    area = QtWidgets.QScrollArea()
+    area.setWidgetResizable(True)
+    area.setFrameShape(QtWidgets.QFrame.NoFrame)
+    area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+    area.setWidget(w)
+    area.setFixedWidth(width)
+    return area, lay
 
 
 def combo(items=()):

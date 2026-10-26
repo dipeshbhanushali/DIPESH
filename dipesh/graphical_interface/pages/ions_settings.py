@@ -169,6 +169,7 @@ class SettingsPanel(QtWidgets.QScrollArea):
         super().__init__()
         self.setWidgetResizable(True)
         self.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         inner = QtWidgets.QWidget()
         lay = QtWidgets.QVBoxLayout(inner)
         lay.setContentsMargins(6, 6, 6, 6)
@@ -226,6 +227,9 @@ class SettingsPanel(QtWidgets.QScrollArea):
         lay.addWidget(box)
         lay.addStretch(1)
         self.methods = []
+        # as wide as its forms need: nothing is cut off at the right
+        self.setMinimumWidth(inner.minimumSizeHint().width()
+                             + self.verticalScrollBar().sizeHint().width() + 4)
 
         self.grey.currentIndexChanged.connect(self._changed)
         self.method_form.changed.connect(self._method_changed)

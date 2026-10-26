@@ -78,6 +78,7 @@ class ImagePage(Page):
         key.setObjectName("muted")
         key.setToolTip("Each circle is the aperture the spot's light was "
                        "summed over")
+        key.setMinimumWidth(1)        # a narrow window may cut the legend
         opts.addWidget(key, 0, QtCore.Qt.AlignBottom)
         col.addLayout(opts)
 
