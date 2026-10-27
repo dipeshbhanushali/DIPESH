@@ -76,3 +76,31 @@ def test_the_settings_panel_folds_from_view_and_its_button_and_is_kept(
     assert not again.right.is_open and not again.panel_action.isChecked()
     again.close()
     again.deleteLater()
+
+
+@pytest.mark.parametrize("look, level", [("Phosphor", "Strong"),
+                                         ("Glass", "Subtle"),
+                                         ("Glass", "Strong")])
+def test_the_settings_are_never_cut_at_the_right(window, look, level):
+    """The column as wide as its content and its scroll bar, the panel as
+    wide as the column and the look's padding; folded, the arrow shows."""
+    from PySide6 import QtWidgets
+    from gui import show
+    window.set_glass_intensity(level, save=False)
+    window.set_theme(look, save=False)
+    for page in ("image", "ions"):
+        p = show(window, page)
+        panel = p.side if page == "ions" else window.right
+        for on in (True, False):
+            window.set_settings_panel(on, save=False)
+            QtWidgets.QApplication.processEvents()
+            if on:
+                inner = panel.area.widget() if page == "ions" else \
+                    panel.content
+                assert panel.area.viewport().width() >= inner.width()
+                if page == "image":
+                    assert panel.width() >= panel.sizeHint().width()
+            b = panel.button
+            assert b.isVisible() and b.geometry().right() < panel.width()
+    window.set_settings_panel(True, save=False)
+    window.set_theme("Phosphor", save=False)

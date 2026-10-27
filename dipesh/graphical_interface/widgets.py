@@ -273,15 +273,14 @@ class SidePanel(QtWidgets.QWidget):
         self.button.setFixedWidth(16)
         self.button.setCursor(QtCore.Qt.PointingHandCursor)
         lay.addWidget(self.button, 0, QtCore.Qt.AlignTop)
+        self.scroll = scroll
         if scroll:
             self.area = QtWidgets.QScrollArea()
             self.area.setWidgetResizable(True)
             self.area.setFrameShape(QtWidgets.QFrame.NoFrame)
             self.area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
             self.area.setWidget(content)
-            self.area.setFixedWidth(content.minimumSizeHint().width()
-                                    + self.area.verticalScrollBar()
-                                    .sizeHint().width() + 2)
+            self._size_area()
         else:
             self.area = content
         lay.addWidget(self.area)
@@ -290,16 +289,31 @@ class SidePanel(QtWidgets.QWidget):
         self.button.clicked.connect(lambda: self.set_open(not self.is_open))
         self.set_open(True, quiet=True)
 
+    def _size_area(self):
+        """The scroll area as wide as the column and its scroll bar, which
+        is wider or narrower in each look."""
+        c = self.content
+        fixed = c.minimumWidth() == c.maximumWidth()
+        self.area.setFixedWidth((c.minimumWidth() if fixed
+                                 else c.minimumSizeHint().width())
+                                + self.area.verticalScrollBar()
+                                .sizeHint().width()
+                                + 2 * self.area.frameWidth())
+
+    def changeEvent(self, e):
+        super().changeEvent(e)
+        if self.scroll and e.type() == QtCore.QEvent.StyleChange:
+            QtCore.QTimer.singleShot(0, self, self._size_area)
+
     def set_open(self, on, quiet=False):
         self.is_open = bool(on)
         self.area.setVisible(self.is_open)
-        # folded, only the strip; open, no wider than a fixed column
-        if not self.is_open:
-            self.setMaximumWidth(self.button.width())
-        elif self.area.minimumWidth() == self.area.maximumWidth():
-            self.setMaximumWidth(self.area.width() + self.button.width())
-        else:
-            self.setMaximumWidth(16777215)
+        # no wider than it needs (its padding, which differs by look,
+        # included): folded, the strip; open, a column of fixed width
+        grow = self.is_open and not self.scroll
+        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred if grow
+                           else QtWidgets.QSizePolicy.Maximum,
+                           QtWidgets.QSizePolicy.Preferred)
         self.fit()
         self.button.setArrowType(QtCore.Qt.RightArrow if self.is_open
                                  else QtCore.Qt.LeftArrow)
@@ -310,23 +324,30 @@ class SidePanel(QtWidgets.QWidget):
 
     def fit(self):
         """In a splitter, give the room of the folded panel to the part at
-        its left, and take it back when it opens (as wide as it was)."""
+        its left, and take it back when it opens (as wide as it was, or as
+        wide as a column of fixed width needs)."""
         split = self.parentWidget()
-        if not isinstance(split, QtWidgets.QSplitter) or self.isHidden():
+        # not before the splitter is on screen: until then its sizes are
+        # only proportions (the panel fits itself when it is shown)
+        if not isinstance(split, QtWidgets.QSplitter) or self.isHidden()                 or not split.isVisible():
             return
         i = split.indexOf(self)
         sizes = split.sizes()
         if i < 1 or sizes[i] <= 0:
             return
+        strip = self.sizeHint().width() if not self.is_open else 0
         if self.is_open:
-            if self._width is None:            # never folded: as laid out
+            if self.scroll:
+                want = self.sizeHint().width()
+            elif self._width is None:          # never folded: as laid out
                 return
-            want = max(self.minimumSizeHint().width(), self._width)
-            give = max(0, min(want - sizes[i], sizes[i - 1]))
+            else:
+                want = max(self.minimumSizeHint().width(), self._width)
+            give = min(want - sizes[i], sizes[i - 1])
         else:
-            if sizes[i] > self.button.width():
+            if sizes[i] > strip:
                 self._width = sizes[i]
-            give = self.button.width() - sizes[i]
+            give = strip - sizes[i]
         if give:
             sizes[i] += give
             sizes[i - 1] -= give

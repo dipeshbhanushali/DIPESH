@@ -133,6 +133,9 @@ class MainWindow(QtWidgets.QMainWindow):
         centre.setSizes([270, 900, 330])
         centre.setCollapsible(1, False)
         centre.setCollapsible(2, False)    # its arrow folds the panel
+        self.list_width = 270              # as the list was last dragged
+        centre.splitterMoved.connect(
+            lambda *_: setattr(self, "list_width", centre.sizes()[0]))
 
         vsplit = QtWidgets.QSplitter(QtCore.Qt.Vertical)
         vsplit.addWidget(centre)
@@ -188,7 +191,23 @@ class MainWindow(QtWidgets.QMainWindow):
         self.stack.setCurrentIndex(k)
         page = self.pages[k]
         self.right.setVisible(page.uses_detection)
+        self.settle_right()
         page.shown()
+
+    def settle_right(self):
+        """The settings column at the right as wide as it needs (that
+        differs by look, and folded), the list at the left as it was last
+        dragged (less if the page needs it), the page in between the rest:
+        the same layout every time."""
+        centre = self.right.parentWidget()
+        if not self.isVisible() or self.right.isHidden():
+            return
+        right = self.right.sizeHint().width()
+        room = centre.width() - 2 * centre.handleWidth()
+        left = min(self.list_width,
+                   room - right - self.stack.minimumSizeHint().width())
+        left = max(left, self.sidebar.minimumSizeHint().width())
+        centre.setSizes([left, max(0, room - left - right), right])
 
     def navigate(self, title, spot=None):
         """Jump to a page by name; optionally centre the image on a spot."""
@@ -333,6 +352,10 @@ class MainWindow(QtWidgets.QMainWindow):
                 m = w._margins
                 lay.setContentsMargins(m.left() + pad, m.top() + pad,
                                        m.right() + pad, m.bottom() + pad)
+        # the settings column takes the width this look needs from the page
+        # beside it, never from the list: back in a look, the same layout
+        self.right._size_area()
+        self.settle_right()
         restyle_plots(self)
         self.console.inset(glass_ui.S_INSET + 4 if strong else 0,
                            4 if strong else 10 if glass else 4)
