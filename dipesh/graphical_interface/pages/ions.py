@@ -64,9 +64,10 @@ class IonsPage(Page):
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.table.setSelectionMode(
             QtWidgets.QAbstractItemView.SingleSelection)
+        # every column as wide as its text, the names first: a narrow table
+        # scrolls to the right, never hides the names
         h = self.table.horizontalHeader()
         h.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
-        h.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
         self.table.setToolTip("time: storage time in s. frames: first-last "
                               "used (empty: all). left out: frames left out "
                               "of the totals, e.g. 0-1, 5")
@@ -90,7 +91,6 @@ class IonsPage(Page):
         left.addWidget(self.status)
         holder = QtWidgets.QWidget()
         holder.setLayout(left)
-        holder.setMinimumWidth(200)
         split.addWidget(holder)
 
         # views
@@ -106,7 +106,8 @@ class IonsPage(Page):
         self.side = SidePanel(self.settings, scroll=False)
         split.addWidget(self.side)
         split.setStretchFactor(1, 1)
-        split.setCollapsible(1, False)
+        for k in range(3):                 # the arrow folds the settings
+            split.setCollapsible(k, False)
         split.setSizes([300, 900, 310])
 
         self.add_video.clicked.connect(self.pick_videos)

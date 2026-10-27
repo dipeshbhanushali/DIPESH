@@ -26,6 +26,7 @@ TOPICS = [
     ("pca", "pca", "pca"),
     ("plots", "plots", "plots"),
     ("pickup", "pickup", "pickup"),
+    ("ions", "ions", "ions"),
     ("learn", "learn", "learn/image"),
     ("—", "workflows", None),
     ("wf_count", "count the antiprotons of a scan", "image"),

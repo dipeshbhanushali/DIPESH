@@ -286,21 +286,56 @@ class SidePanel(QtWidgets.QWidget):
             self.area = content
         lay.addWidget(self.area)
         self.is_open = True
+        self._width = None                 # open width, kept while folded
         self.button.clicked.connect(lambda: self.set_open(not self.is_open))
         self.set_open(True, quiet=True)
 
     def set_open(self, on, quiet=False):
         self.is_open = bool(on)
         self.area.setVisible(self.is_open)
-        # folded, only the strip: a splitter gives the rest to the picture
-        self.setMaximumWidth(16777215 if self.is_open
-                             else self.button.width())
+        # folded, only the strip; open, no wider than a fixed column
+        if not self.is_open:
+            self.setMaximumWidth(self.button.width())
+        elif self.area.minimumWidth() == self.area.maximumWidth():
+            self.setMaximumWidth(self.area.width() + self.button.width())
+        else:
+            self.setMaximumWidth(16777215)
+        self.fit()
         self.button.setArrowType(QtCore.Qt.RightArrow if self.is_open
                                  else QtCore.Qt.LeftArrow)
         self.button.setToolTip("Hide the settings (View > Settings panel)"
                                if self.is_open else "Show the settings")
         if not quiet:
             self.toggled.emit(self.is_open)
+
+    def fit(self):
+        """In a splitter, give the room of the folded panel to the part at
+        its left, and take it back when it opens (as wide as it was)."""
+        split = self.parentWidget()
+        if not isinstance(split, QtWidgets.QSplitter) or self.isHidden():
+            return
+        i = split.indexOf(self)
+        sizes = split.sizes()
+        if i < 1 or sizes[i] <= 0:
+            return
+        if self.is_open:
+            if self._width is None:            # never folded: as laid out
+                return
+            want = max(self.minimumSizeHint().width(), self._width)
+            give = max(0, min(want - sizes[i], sizes[i - 1]))
+        else:
+            if sizes[i] > self.button.width():
+                self._width = sizes[i]
+            give = self.button.width() - sizes[i]
+        if give:
+            sizes[i] += give
+            sizes[i - 1] -= give
+            split.setSizes(sizes)
+
+    def showEvent(self, e):
+        super().showEvent(e)
+        # shown again after a page without it: the splitter has laid it out
+        QtCore.QTimer.singleShot(0, self, self.fit)
 
 
 class Sidebar(QtWidgets.QWidget):

@@ -47,13 +47,13 @@ def test_every_page_fits_in_every_look_panel_open_and_folded(sizes):
 
 
 def test_folding_the_panel_gives_the_picture_room(sizes):
-    # the same window, the panel folded to its strip: the rest is the picture's
-    by = {(p["look"], p["panel"], p["page"]): p["panel_width"]
+    # the same window, the panel folded to its strip: the picture (or the
+    # Ions page's views) gets the room
+    by = {(p["look"], p["panel"], p["page"]): p["views"]
           for p in sizes["pages"]}
     for look in ("Phosphor Strong", "Glass Strong"):
         for page in ("image", "ions"):
-            assert by[(look, False, page)] <= 20
-            assert by[(look, True, page)] > 200
+            assert by[(look, False, page)] > by[(look, True, page)] + 200
 
 
 def test_the_settings_panel_folds_from_view_and_its_button_and_is_kept(

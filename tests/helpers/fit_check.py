@@ -56,8 +56,8 @@ def main():
                 out.append({"look": f"{look} {level}", "panel": panel,
                             "page": page.title, "min": [m.width(), m.height()],
                             "size": [win.width(), win.height()],
-                            "panel_width": (page.side if hasattr(page, "side")
-                                            else win.right).width()})
+                            "views": (page.tabs if hasattr(page, "tabs")
+                                      else win.stack).width()})
     win.set_theme("Phosphor", save=False)
     win.close()
     print(json.dumps({"room": ROOM, "fonts": os.environ.get("QT_QPA_FONTDIR"),

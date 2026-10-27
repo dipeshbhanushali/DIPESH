@@ -204,3 +204,28 @@ def test_every_view_in_glass(ions, level):
         QtWidgets.QApplication.processEvents()
         ions.views[k].refresh()
         assert not win.grab().isNull()
+
+
+def test_the_layout_shows_the_names_and_the_whole_settings(window, videos):
+    page = show(window, "ions")
+    page.add_datasets([IonDataset(f"{t} s", p, storage_time=t)
+                       for t, p in videos.items()])
+    window.resize(window.minimumSizeHint())       # as narrow as it goes
+    QtWidgets.QApplication.processEvents()
+    t = page.table
+    t.horizontalScrollBar().setValue(0)
+    # the names are the first thing in the table, as wide as the longest
+    assert t.columnViewportPosition(0) == 0
+    widest = max(t.fontMetrics().horizontalAdvance(d.name)
+                 for d in page.datasets)
+    assert t.columnWidth(0) >= widest
+    # the settings column is as wide as its forms: it never scrolls sideways
+    s = page.settings
+    assert s.horizontalScrollBarPolicy() == QtCore.Qt.ScrollBarAlwaysOff
+    assert s.width() >= s.widget().minimumSizeHint().width()
+    # and folding it gives its room to the views
+    views = page.tabs.width()
+    window.set_settings_panel(False, save=False)
+    QtWidgets.QApplication.processEvents()
+    assert page.tabs.width() > views + 150
+    window.set_settings_panel(True, save=False)

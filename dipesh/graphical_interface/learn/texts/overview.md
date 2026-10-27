@@ -8,7 +8,7 @@ explanation in Markdown. There are no figures here, so no `shown:` or
 `legend:` lines, and no live values.
 
 The keys are: intro, program, session, image, spots, histogram, pca, plots,
-pickup, learn, wf_count, wf_separate, wf_tune, wf_pickup. The list on the
+pickup, ions, learn, wf_count, wf_separate, wf_tune, wf_pickup. The list on the
 left of the screen is in the program (overview_lesson.py); only the texts
 are here.
 
@@ -20,7 +20,8 @@ Hits**; "pbar" is the physicists' short name for the antiproton, written p̄.
 DIPESH counts antiprotons in camera images of the detector screen, measures
 each spot of light, and compares runs. The top bar is one page per step:
 **image**, **spots**, **histogram**, **pca** (principal component
-analysis), **plots**, **pickup**, and this **learn** page.
+analysis), **plots**, **pickup**, **ions** for ion release videos, and
+this **learn** page.
 
 Rest the mouse on a name in the list on the left to read what that page is
 for and how to use it. Click a name to keep its text while you move the
@@ -190,6 +191,34 @@ Use it to:
 
 The pickup numbers of every run go into the export and can be plotted on
 the **plots** page.
+
+## ions
+title: ions
+
+The **ions** page analyses videos of ions released from the trap onto the
+detector, which is a different task from counting antiprotons: in a
+release, many ions arrive at once. Single ions make small spots, which are
+counted one by one, while the ions that arrive together pile up into one
+bright disc, whose light is turned into a number of ions with the light of
+one single ion (the calibration).
+
+The page has three parts: the **datasets** on the left (one video each,
+with its storage time), the **views** in the middle, and the **settings**
+on the right (the arrow folds them away).
+
+Use it to:
+
+- **count the ions** of a release: the single ions plus the ions in the
+  disc, frame by frame and in total;
+- **check the calibration**: the light of one ion, from the single spots;
+- **see the errors**: a table of the error parts, each named, that you can
+  edit;
+- **fit the decay**: the number of ions against the storage time, which
+  gives the lifetime of the ions in the trap;
+- **export** the results and the settings as CSV and JSON files.
+
+Settings can be saved to a file and loaded again, so every result can be
+reproduced.
 
 ## learn
 title: learn

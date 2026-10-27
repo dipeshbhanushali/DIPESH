@@ -132,6 +132,7 @@ class MainWindow(QtWidgets.QMainWindow):
         centre.setStretchFactor(1, 1)
         centre.setSizes([270, 900, 330])
         centre.setCollapsible(1, False)
+        centre.setCollapsible(2, False)    # its arrow folds the panel
 
         vsplit = QtWidgets.QSplitter(QtCore.Qt.Vertical)
         vsplit.addWidget(centre)
