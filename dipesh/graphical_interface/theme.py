@@ -153,6 +153,12 @@ QComboBox {{ combobox-popup: 0; }}
 QSpinBox::up-button, QSpinBox::down-button,
 QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {{ width: 14px;
     background: {RAISED}; border: none; }}
+/* a box without arrows: Qt 6.12 otherwise leaves its text 1 px wide */
+QSpinBox[buttonSymbols="NoButtons"]::up-button,
+QSpinBox[buttonSymbols="NoButtons"]::down-button,
+QDoubleSpinBox[buttonSymbols="NoButtons"]::up-button,
+QDoubleSpinBox[buttonSymbols="NoButtons"]::down-button {{
+    subcontrol-origin: border; width: 0px; }}
 
 QSlider::groove:horizontal {{ height: 3px; background: {RULE}; }}
 QSlider::sub-page:horizontal {{ background: #4E8A2E; }}

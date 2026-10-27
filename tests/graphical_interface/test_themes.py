@@ -436,3 +436,19 @@ def test_the_windows_11_frame_does_nothing_where_it_cannot(window,
         assert glass.windows_frame(window, True) in (True, False)
     else:
         assert glass.windows_frame(window, True) is False
+
+
+@pytest.mark.parametrize("look, level", LOOKS)
+def test_number_boxes_show_their_text(window, look, level):
+    """Qt 6.12 leaves the text of a box without arrows 1 px wide unless the
+    style sheet says where its (missing) arrows sit."""
+    window.set_glass_intensity(level, save=False)
+    window.set_theme(look, save=False)
+    window.show_page(0)
+    QtWidgets.QApplication.processEvents()
+    boxes = [b for b in window.findChildren(QtWidgets.QAbstractSpinBox)
+             if b.isVisible()]
+    assert boxes
+    for b in boxes:
+        assert b.lineEdit().width() >= b.width() // 2, b.text()
+    window.set_theme("Phosphor", save=False)
