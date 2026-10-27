@@ -1,6 +1,6 @@
 # Changes
 
-## 2.0.0 (in development)
+## 2.0.0 (2026-10-27)
 
 - Ion analysis (`dipesh.ion_analysis`, the *ions* page): MCP release videos,
   single ions counted one by one in a region, a pile-up disc estimated from
@@ -40,6 +40,31 @@
 - A colour image that is not grey gives slightly different numbers than in
   1.0, which let the file decoder make it grey: the weights are now the same
   for every format.
+- The window fits a 1536 x 864 screen (1920 x 1080 at 125 %): the settings
+  column scrolls and folds away (its arrow, or View > Settings panel,
+  remembered), the list on the left can be made narrow, and a page no longer
+  makes the window as wide as the widest page. Tested in every look.
+- learn's overview lists the ions page.
+- Version 2.0.0 in the build files and the installer name.
+
+### Known limitations
+
+- **Ion analysis: settings are not yet checked against the physics.** The
+  code reproduces the earlier analyses exactly with their presets, but which
+  settings and error components are right for a given set of videos is not
+  decided by the program (see the open questions in the ion review).
+- **The earlier ion numbers depend on NumPy 1.x.** The legacy presets copy
+  NumPy 1.x's order for equally bright candidates in pure Python, which is
+  slow on frames with thousands of candidates. New analyses use reading
+  order.
+- **Ion analysis speed.** About 20-40 ms per frame: a 900-frame video takes
+  about half a minute, plus the background.
+- **Glass looks are drawn by Qt, not by the system**, except the Windows 11
+  Mica frame; on other systems Glass is the same without it.
+- **The installer is not code-signed**: Windows shows a SmartScreen warning
+  at the first start.
+- **The 1.0 limitations below still apply** (concentration of a spot centred
+  on a pixel, display arithmetic in the window code).
 
 ## 1.0.0 — first public release (2026-10-08)
 

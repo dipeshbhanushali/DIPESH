@@ -1,5 +1,5 @@
 # Push a version tag -> a GitHub release with the Windows installer attached.
-#     git tag v1.0.0 && git push origin v1.0.0
+#     git tag v2.0.0 && git push origin v2.0.0
 # With the repository connected to Zenodo, that release also archives the
 # source and mints the DOI.
 

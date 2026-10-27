@@ -4,11 +4,11 @@
 ;   2. Inno Setup (free): https://jrsoftware.org/isdl.php
 ;   3. iscc build\installer.iss
 ;
-; Produces installer\DIPESH-setup-1.0.0.exe: Start Menu entry, optional
+; Produces installer\DIPESH-setup-2.0.0.exe: Start Menu entry, optional
 ; desktop icon, uninstaller, no admin rights needed.
 
 #define AppName     "DIPESH"
-#define AppVersion  "1.0.0"
+#define AppVersion  "2.0.0"
 #define AppExe      "DIPESH.exe"
 
 [Setup]

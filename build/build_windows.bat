@@ -3,7 +3,7 @@ REM Build DIPESH and its installer. Run from the repository root, in cmd:
 REM     build\build_windows.bat
 REM
 REM   dist\DIPESH\DIPESH.exe                   the app (portable folder)
-REM   installer\DIPESH-setup-1.0.0.exe           if Inno Setup is installed
+REM   installer\DIPESH-setup-2.0.0.exe           if Inno Setup is installed
 
 setlocal
 echo [1/4] Clean build environment...
@@ -22,7 +22,7 @@ echo [4/4] Installer...
 set ISCC="%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe"
 if exist %ISCC% (
     %ISCC% build\installer.iss                   || goto :error
-    echo Installer: installer\DIPESH-setup-1.0.0.exe
+    echo Installer: installer\DIPESH-setup-2.0.0.exe
 ) else (
     echo Inno Setup not found - skipped. The app is in dist\DIPESH\
 )

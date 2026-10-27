@@ -10,6 +10,8 @@ them — with the PicoScope pickup signals of the same runs alongside.
 Add folders of runs on the left. Pick an analysis on the top bar. Drag the
 detection settings on the right and watch the count change live.
 
+Version 2.0.0, released 2026-10-27. What changed: `CHANGES.md`.
+
 | analysis | what it shows |
 |---|---|
 | **image** | the frame, every counted spot drawn at the aperture its light was summed over, the run parameters underneath |
@@ -18,6 +20,8 @@ detection settings on the right and watch the count change live.
 | **pca** | all brightness and shape features at once, 2σ ellipses per dataset, the loadings that drive PC1 |
 | **plots** | any run quantity (count, luminosity, pickup timing or size) against any run parameter, repeats averaged, fitted |
 | **pickup** | both scopes' channels on the shared experiment clock, trap RF notched out, pulse time, amplitude, area and width |
+| **ions** | ion release videos: single ions, the pile-up disc, calibration, errors, the decay with storage time (see [Ions](#ions)) |
+| **learn** | what each page is for, and each analysis step explained on your own data |
 
 **Run all** counts and measures every image in every dataset. **Export**
 writes the results — and appends to the master archive if you want.
@@ -123,7 +127,13 @@ of every page in each look are written to `docs/screenshots/v2/` by
 ![The image page in Glass, Strong](docs/screenshots/v2/glass_strong_1_image.png)
 
 **Move around.** Click a run, or use ↑ ↓ in the list, or PgUp / PgDn from
-anywhere. Ctrl+1 … Ctrl+6 switch analysis.
+anywhere. Ctrl+1 … Ctrl+8 switch page.
+
+**Small screens.** The window fits a 1920 x 1080 screen at 125 % scaling
+(1536 x 864). The settings column on the right scrolls when the window is
+short; its arrow (or *View > Settings panel*) folds it to a thin strip to
+give the picture the room, on *image*, *spots* and *ions*, and the choice is
+remembered. The list on the left can be dragged narrow.
 
 **Tune.** On *image* and *spots*, the settings on the right re-detect the
 current frame as you drag — about 0.1 s per frame. White rings are isolated
@@ -237,7 +247,8 @@ or linearly.
 
 **Decay.** N0 exp(-t / tau) fitted to any datasets or series, weighted by
 their errors (absolute), with tau, N0, their covariance and the reduced
-chi-squared; or tau from two datasets with first-order error propagation.
+chi-squared; or tau from two datasets, with first-order error propagation
+(or, as an option, the relative-error formula some earlier analyses used).
 *Export* writes the per-frame tables, the totals with their errors, every
 error component and a JSON of everything.
 
@@ -287,14 +298,14 @@ build\build_windows.bat
 
 It makes a clean environment, installs, builds `dist\DIPESH\`, and — if
 [Inno Setup](https://jrsoftware.org/isdl.php) is installed — wraps it into
-`installer\DIPESH-setup-1.0.0.exe`. Expect roughly 350–450 MB: Qt, OpenCV,
+`installer\DIPESH-setup-2.0.0.exe`. Expect roughly 350–450 MB: Qt, OpenCV,
 SciPy and NumPy are all inside.
 
 Install with `pip install .`, not `pip install -e .` — PyInstaller cannot
 collect an editable install and the built app fails at startup with
 `ModuleNotFoundError`.
 
-Pushing a version tag (`git tag v1.0.0 && git push origin v1.0.0`) makes
+Pushing a version tag (`git tag v2.0.0 && git push origin v2.0.0`) makes
 GitHub build the installer on a Windows machine and attach it to the release.
 With the repository connected to [Zenodo], that release also archives the
 source and mints a DOI — the citable version and the download come from the
@@ -364,12 +375,17 @@ py -m pip install ".[dev]"
 py -m pytest -q
 ```
 
-About a minute and a half. Each spot feature is checked against a closed-form
-value on synthetic spots (a Gaussian of known amplitude and width), six
-reference frames are checked against stored numbers (counts exactly, decimal
-values to 1e-12 relative), and the window is driven without a screen
-(pytest-qt, `QT_QPA_PLATFORM=offscreen`). The reference frames are synthetic:
-no camera data is shipped.
+About eight minutes, most of it the window tests. Each spot feature is
+checked against a closed-form value on synthetic spots (a Gaussian of known
+amplitude and width), six reference frames are checked against stored numbers
+(counts exactly, decimal values to 1e-12 relative), and the window is driven
+without a screen (pytest-qt, `QT_QPA_PLATFORM=offscreen`). The reference
+frames are synthetic: no camera data is shipped.
+
+The ion tests that repeat earlier analyses need the real videos: they look in
+the folder named by `DIPESH_ION_DATA` and are skipped when it is missing.
+With `DIPESH_ION_FULL=1` they run every storage video, not just one (about
+ten minutes more).
 
 `py -m dipesh --selftest` starts the program and closes it again after 5 s: a
 quick check that an install works.
