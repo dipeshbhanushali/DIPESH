@@ -45,6 +45,8 @@
   remembered), the list on the left can be made narrow, and a page no longer
   makes the window as wide as the widest page. Tested in every look.
 - learn's overview lists the ions page.
+- Works with PySide6 6.12, which the Windows build now gets: the number
+  boxes beside the sliders were empty with it.
 - Version 2.0.0 in the build files and the installer name.
 
 ### Known limitations
@@ -63,6 +65,9 @@
   Mica frame; on other systems Glass is the same without it.
 - **The installer is not code-signed**: Windows shows a SmartScreen warning
   at the first start.
+- **With PySide6 6.12 the value in a number box sits against its left
+  edge** (6.11 leaves a small margin). The Phosphor pixel tests compare
+  against pictures made with 6.11.2 and skip themselves with another Qt.
 - **The 1.0 limitations below still apply** (concentration of a spot centred
   on a pixel, display arithmetic in the window code).
 
